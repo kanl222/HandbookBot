@@ -1,0 +1,20 @@
+services:
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+
+      - Telegram__Token=${TELEGRAM_TOKEN}
+      - Telegram__WebhookUrl=${TELEGRAM_WEBHOOK_URL}
+
+      - Max__Enabled=${MAX_ENABLED:-false}
+      - Max__Token=${MAX_TOKEN}
+      - Max__TimeoutSeconds=${MAX_TIMEOUT_SECONDS:-30}
+
+      - Data__UseDatabase=${DATA_USE_DATABASE:-true}
+      - Data__ConnectionString=${DATA_CONNECTION_STRING}
+    ports:
+      - ":8080"

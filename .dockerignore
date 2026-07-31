@@ -1,0 +1,17 @@
+.git
+.gitignore
+.github
+.gitlab-ci.yml
+.dockerignore
+.DS_Store
+bin/
+obj/
+node_modules/
+.vs/
+.vscode/
+*.swp
+*.swo
+*~
+.idea/
+*.user
+*.suo
