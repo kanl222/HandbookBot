@@ -12,7 +12,7 @@ namespace HandbookBot.Telegram;
 /// Фоновый сервис (BackgroundService), отвечающий за получение обновлений от Telegram методом Long Polling.
 /// Принимает новые сообщения и вызывает CommandDispatcher в отдельном DI Scope для каждого входящего запроса.
 /// </summary>
-public sealed class TelegramPollingWorker : BackgroundService
+public sealed class TelegramPollingWorker : BackgroundService, IDisposable
 {
     private readonly ITelegramBotClient _client;
     private readonly TelegramPlatformAdapter _adapter;
@@ -89,5 +89,10 @@ public sealed class TelegramPollingWorker : BackgroundService
     {
         _logger.LogError(ex, "Ошибка соединения Telegram API в Polling Worker");
         return Task.CompletedTask;
+    }
+
+    public override void Dispose()
+    {
+        base.Dispose();
     }
 }

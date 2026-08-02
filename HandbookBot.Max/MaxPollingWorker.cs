@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 
 namespace HandbookBot.Max;
 
-public sealed class MaxPollingWorker : BackgroundService
+public sealed class MaxPollingWorker : BackgroundService, IDisposable
 {
     private readonly IMaxBotClient _client;
     private readonly MaxPlatformAdapter _adapter;
@@ -78,5 +78,10 @@ public sealed class MaxPollingWorker : BackgroundService
                 }
             }
         }
+    }
+    public override void Dispose()
+    {
+        _adapter.OnMessageReceived -= HandleMessageAsync;
+        base.Dispose();
     }
 }
