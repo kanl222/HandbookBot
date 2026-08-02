@@ -6,6 +6,10 @@ using HandbookBot.Data;
 using HandbookBot.Max;
 using HandbookBot.Telegram;
 
+// Загружаем переменные из .env файла в переменные окружения процесса.
+// Это нужно сделать до создания builder.
+DotNetEnv.Env.Load();
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Настройка логирования
@@ -31,11 +35,13 @@ builder.Services.AddScoped<ICommandFactory, CommandFactory>();
 builder.Services.AddBotCommands();
 
 // -------------------- 4. Адаптер Telegram (Telegram Adapter) ──────
-var telegramToken = builder.Configuration["Telegram:Token"];
-if (!string.IsNullOrWhiteSpace(telegramToken))
+var telegramEnabled = builder.Configuration.GetValue<bool>("Telegram:Enabled");
+if (telegramEnabled)
 {
+    var telegramToken = builder.Configuration["Telegram:Token"];
     builder.Services.AddTelegramPlatform(telegramToken);
 }
+
 
 // -------------------- 5. Адаптер MAX (MAX Adapter) --------------------─
 var maxEnabled = builder.Configuration.GetValue<bool>("Max:Enabled");

@@ -14,6 +14,8 @@ namespace HandbookBot.Telegram;
 /// </summary>
 public sealed class TelegramPlatformAdapter : IMessagingPlatform
 {
+
+    public string Name { get; init; } = "Telegram";
     private readonly ITelegramBotClient _client;
     private readonly ILogger<TelegramPlatformAdapter> _logger;
 
@@ -118,14 +120,14 @@ public sealed class TelegramPlatformAdapter : IMessagingPlatform
                 UserId: update.Message.From?.Id.ToString() ?? update.Message.Chat.Id.ToString(),
                 Text: update.Message.Text,
                 CallbackData: null,
-                Platform: "Telegram"),
+                Platform: Name),
 
             UpdateType.CallbackQuery when update.CallbackQuery is not null => new IncomingMessage(
                 ChatId: GetCallbackChatId(update.CallbackQuery),
                 UserId: update.CallbackQuery.From.Id.ToString(),
                 Text: update.CallbackQuery.Data ?? string.Empty,
                 CallbackData: update.CallbackQuery.Data,
-                Platform: "Telegram"),
+                Platform: Name),
 
             _ => null
         };
