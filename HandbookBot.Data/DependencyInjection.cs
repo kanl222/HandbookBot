@@ -55,7 +55,7 @@ public static class DependencyInjection
                 ? sp.GetRequiredService<EfPharmacyRepository>()
                 : sp.GetRequiredService<InMemoryPharmacyRepository>();
 
-            var cache = sp.GetRequiredService<Microsoft.Extensions.Caching.Memory.IMemoryCache>();
+            var cache = sp.GetRequiredService<Microsoft.Extensions.Caching.Distributed.IDistributedCache>();
             return new CachedPharmacyRepository(inner, cache);
         });
 
@@ -67,7 +67,7 @@ public static class DependencyInjection
                 ? sp.GetRequiredService<EfFaqRepository>()
                 : sp.GetRequiredService<InMemoryFaqRepository>();
 
-            var cache = sp.GetRequiredService<Microsoft.Extensions.Caching.Memory.IMemoryCache>();
+            var cache = sp.GetRequiredService<Microsoft.Extensions.Caching.Distributed.IDistributedCache>();
             return new CachedFaqRepository(inner, cache);
         });
 
