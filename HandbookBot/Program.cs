@@ -3,6 +3,7 @@ using HandbookBot.Core.Commands;
 using HandbookBot.Core.Interfaces;
 using HandbookBot.Core.Services;
 using HandbookBot.Data;
+using HandbookBot.Data.Caching;
 using HandbookBot.Max;
 using HandbookBot.Telegram;
 
@@ -23,7 +24,8 @@ builder.Services.AddHandbookData(builder.Configuration);
 
 // -------------------- 2. Ядро и Сервисы (Core Layer) --------------------
 // Хранилище сессий пользователей (InMemory или Redis в будущем)
-builder.Services.AddSingleton<IUserSessionStore, InMemoryUserSessionStore>();
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSingleton<IUserSessionStore, DistributedCacheUserSessionStore>();
 
 // Диспетчер команд и фабрика команд регистрируются как Scoped,
 // чтобы корректно взаимодействовать с Scoped DbContext на каждый запрос

@@ -5,6 +5,8 @@ namespace HandbookBot.Tests.Helpers;
 
 public class FakeMessagingPlatform : IMessagingPlatform
 {
+    public string Name { get; init; } = "Fake";
+
 #pragma warning disable CS0067 // Событие не используется
     public event Func<IncomingMessage, Task>? OnMessageReceived;
 #pragma warning restore CS0067

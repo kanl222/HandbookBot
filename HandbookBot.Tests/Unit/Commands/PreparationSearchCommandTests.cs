@@ -35,7 +35,7 @@ public class PreparationSearchCommandTests
         // Assert
         await _sessions.Received(1).SetStateAsync(
             "user", 
-            Arg.Is<UserDialogState>(s => s.AwaitingInputFor == "prepsearch"),
+            Arg.Is<UserDialogState>(s => s != null && s.AwaitingInputFor == "prepsearch"),
             Arg.Any<TimeSpan?>(),
             Arg.Any<CancellationToken>());
 
@@ -75,5 +75,42 @@ public class PreparationSearchCommandTests
         var sent = Assert.Single(_platform.SentMessages);
         Assert.Contains("Результаты поиска «Aspirin»", sent.Text);
         Assert.Contains("Aspirin C", sent.Text);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_PaginationCallback_ReadsQueryFromSessionAndShowsResults()
+    {
+        // Arrange
+        var msg = new IncomingMessage("chat", "user", "", "prepsearch:2", "Test");
+        _sessions.GetStateAsync("user", Arg.Any<CancellationToken>())
+            .Returns(new UserDialogState("prepsearch") { SearchQuery = "Aspirin" });
+
+        var items = new[] { TestData.CreatePreparation(1, "Aspirin C", 100m, 1) };
+        _repo.SearchAsync("Aspirin", 2, 5, Arg.Any<CancellationToken>())
+            .Returns(new PagedResult<Preparation>(items, 6, 2, 5));
+
+        // Act
+        await _sut.ExecuteAsync(_context, msg);
+
+        // Assert
+        var sent = Assert.Single(_platform.SentMessages);
+        Assert.Contains("Результаты поиска «Aspirin»", sent.Text);
+        Assert.Contains("стр. 2/2", sent.Text);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_PaginationCallbackExpiredSession_ShowsError()
+    {
+        // Arrange
+        var msg = new IncomingMessage("chat", "user", "", "prepsearch:2", "Test");
+        _sessions.GetStateAsync("user", Arg.Any<CancellationToken>())
+            .Returns((UserDialogState?)null); // Expired session
+
+        // Act
+        await _sut.ExecuteAsync(_context, msg);
+
+        // Assert
+        var sent = Assert.Single(_platform.SentMessages);
+        Assert.Contains("Время сессии поиска истекло", sent.Text);
     }
 }
