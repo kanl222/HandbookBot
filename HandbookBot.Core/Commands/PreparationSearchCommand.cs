@@ -68,8 +68,10 @@ public sealed class PreparationSearchCommand : IBotCommand
 
         if (string.IsNullOrWhiteSpace(searchText))
         {
-            await context.Sessions.ClearStateAsync(context.UserId, ct);
-            await context.ReplyAsync("Поисковый запрос не может быть пустым. Попробуйте ещё раз или нажмите /start.");
+            // Сессию не сбрасываем — пользователь остаётся в режиме ожидания ввода
+            await context.ReplyAsync(
+                "Поисковый запрос не может быть пустым. Введите название препарата:",
+                BotKeyboard.SingleColumn(BotButton.Callback("Главное меню", "start:menu")));
             return;
         }
 

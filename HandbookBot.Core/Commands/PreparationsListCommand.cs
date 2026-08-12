@@ -32,7 +32,9 @@ public sealed class PreparationsListCommand : IBotCommand
 
         if (result.Items.Count == 0)
         {
-            await context.ReplyAsync("Список препаратов пуст.");
+            await context.ReplyAsync(
+                "Список препаратов пуст.",
+                BotKeyboard.SingleColumn(BotButton.Callback("Главное меню", "start:menu")));
             return;
         }
 
@@ -54,7 +56,7 @@ public sealed class PreparationsListCommand : IBotCommand
         {
             rows.Add(new[]
             {
-                BotButton.Callback($"{p.Name} — на карте", $"pharmmap:{p.PharmacyId}")
+                BotButton.Callback("На карте", $"pharmmap:{p.PharmacyId}")
             });
         }
 
