@@ -21,11 +21,11 @@ public sealed class DistributedCacheUserSessionStore : IUserSessionStore
         _cache = cache;
     }
 
-    private static string GetKey(string userId) => $"session:{userId}";
+    private static string GetKey(string sessionKey) => $"session:{sessionKey.ToLowerInvariant()}";
 
-    public async Task<UserDialogState?> GetStateAsync(string userId, CancellationToken ct = default)
+    public async Task<UserDialogState?> GetStateAsync(string sessionKey, CancellationToken ct = default)
     {
-        var data = await _cache.GetStringAsync(GetKey(userId), ct);
+        var data = await _cache.GetStringAsync(GetKey(sessionKey), ct);
         if (string.IsNullOrEmpty(data))
         {
             return null;
@@ -41,7 +41,7 @@ public sealed class DistributedCacheUserSessionStore : IUserSessionStore
         }
     }
 
-    public async Task SetStateAsync(string userId, UserDialogState state, TimeSpan? ttl = null, CancellationToken ct = default)
+    public async Task SetStateAsync(string sessionKey, UserDialogState state, TimeSpan? ttl = null, CancellationToken ct = default)
     {
         var data = JsonSerializer.Serialize(state, _jsonOptions);
         var options = new DistributedCacheEntryOptions
@@ -49,11 +49,11 @@ public sealed class DistributedCacheUserSessionStore : IUserSessionStore
             AbsoluteExpirationRelativeToNow = ttl ?? TimeSpan.FromMinutes(10)
         };
 
-        await _cache.SetStringAsync(GetKey(userId), data, options, ct);
+        await _cache.SetStringAsync(GetKey(sessionKey), data, options, ct);
     }
 
-    public async Task ClearStateAsync(string userId, CancellationToken ct = default)
+    public async Task ClearStateAsync(string sessionKey, CancellationToken ct = default)
     {
-        await _cache.RemoveAsync(GetKey(userId), ct);
+        await _cache.RemoveAsync(GetKey(sessionKey), ct);
     }
 }

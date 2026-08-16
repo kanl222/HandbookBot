@@ -13,6 +13,8 @@ public sealed class EfPharmacyRepository : IPharmacyRepository
 
     public async Task<PagedResult<Pharmacy>> GetPageAsync(int page, int pageSize, CancellationToken ct = default)
     {
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
         var total = await _db.Pharmacies.CountAsync(ct);
         var items = await _db.Pharmacies
             .OrderBy(p => p.Name)

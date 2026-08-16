@@ -14,28 +14,30 @@ public sealed class InMemoryUserSessionStore : IUserSessionStore
 
     private readonly ConcurrentDictionary<string, Entry> _store = new();
 
-    public Task<UserDialogState?> GetStateAsync(string userId, CancellationToken ct = default)
+    public Task<UserDialogState?> GetStateAsync(string sessionKey, CancellationToken ct = default)
     {
-        if (_store.TryGetValue(userId, out var entry))
+        var key = sessionKey.ToLowerInvariant();
+        if (_store.TryGetValue(key, out var entry))
         {
             if (entry.ExpiresAt > DateTimeOffset.UtcNow)
                 return Task.FromResult<UserDialogState?>(entry.State);
 
-            _store.TryRemove(userId, out _);
+            _store.TryRemove(key, out _);
         }
         return Task.FromResult<UserDialogState?>(null);
     }
 
-    public Task SetStateAsync(string userId, UserDialogState state, TimeSpan? ttl = null, CancellationToken ct = default)
+    public Task SetStateAsync(string sessionKey, UserDialogState state, TimeSpan? ttl = null, CancellationToken ct = default)
     {
+        var key = sessionKey.ToLowerInvariant();
         var expires = DateTimeOffset.UtcNow.Add(ttl ?? TimeSpan.FromMinutes(10));
-        _store[userId] = new Entry(state, expires);
+        _store[key] = new Entry(state, expires);
         return Task.CompletedTask;
     }
 
-    public Task ClearStateAsync(string userId, CancellationToken ct = default)
+    public Task ClearStateAsync(string sessionKey, CancellationToken ct = default)
     {
-        _store.TryRemove(userId, out _);
+        _store.TryRemove(sessionKey.ToLowerInvariant(), out _);
         return Task.CompletedTask;
     }
 }

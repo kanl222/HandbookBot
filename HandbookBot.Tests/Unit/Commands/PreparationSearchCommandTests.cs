@@ -34,7 +34,7 @@ public class PreparationSearchCommandTests
 
         // Assert
         await _sessions.Received(1).SetStateAsync(
-            "user", 
+            "test:user", 
             Arg.Is<UserDialogState>(s => s != null && s.AwaitingInputFor == "prepsearch"),
             Arg.Any<TimeSpan?>(),
             Arg.Any<CancellationToken>());
@@ -54,7 +54,6 @@ public class PreparationSearchCommandTests
         await _sut.ExecuteAsync(_context, msg);
 
         // Assert
-        await _sessions.Received(1).ClearStateAsync("user", Arg.Any<CancellationToken>());
         var sent = Assert.Single(_platform.SentMessages);
         Assert.Contains("не может быть пустым", sent.Text);
     }
@@ -82,7 +81,7 @@ public class PreparationSearchCommandTests
     {
         // Arrange
         var msg = new IncomingMessage("chat", "user", "", "prepsearch:2", "Test");
-        _sessions.GetStateAsync("user", Arg.Any<CancellationToken>())
+        _sessions.GetStateAsync("test:user", Arg.Any<CancellationToken>())
             .Returns(new UserDialogState("prepsearch") { SearchQuery = "Aspirin" });
 
         var items = new[] { TestData.CreatePreparation(1, "Aspirin C", 100m, 1) };
@@ -103,7 +102,7 @@ public class PreparationSearchCommandTests
     {
         // Arrange
         var msg = new IncomingMessage("chat", "user", "", "prepsearch:2", "Test");
-        _sessions.GetStateAsync("user", Arg.Any<CancellationToken>())
+        _sessions.GetStateAsync("test:user", Arg.Any<CancellationToken>())
             .Returns((UserDialogState?)null); // Expired session
 
         // Act

@@ -12,6 +12,7 @@ public sealed class CommandDispatcher
 {
     private readonly ICommandFactory _factory;
     private readonly IUserSessionStore _sessions;
+    private readonly IRateLimiter _rateLimiter;
     private readonly ILogger<CommandDispatcher> _logger;
 
     /// <summary>
@@ -19,14 +20,17 @@ public sealed class CommandDispatcher
     /// </summary>
     /// <param name="factory">Фабрика для получения зарегистрированных команд.</param>
     /// <param name="sessions">Хранилище состояния сессий пользователей.</param>
+    /// <param name="rateLimiter">Сервис ограничения частоты запросов.</param>
     /// <param name="logger">Экземпляр логгера.</param>
     public CommandDispatcher(
         ICommandFactory factory,
         IUserSessionStore sessions,
+        IRateLimiter rateLimiter,
         ILogger<CommandDispatcher> logger)
     {
         _factory = factory;
         _sessions = sessions;
+        _rateLimiter = rateLimiter;
         _logger = logger;
     }
 
@@ -46,9 +50,18 @@ public sealed class CommandDispatcher
             MessagingPlatform: platform,
             Sessions: _sessions);
 
-        _logger.LogInformation(
-            "Маршрутизация сообщения: Platform={Platform}, ChatId={ChatId}, UserId={UserId}, Text='{Text}', CallbackData='{CallbackData}'",
-            message.Platform, message.ChatId, message.UserId, message.Text, message.CallbackData);
+        // Проверка лимита частоты запросов для защиты от флуда и DoS
+        if (!_rateLimiter.IsAllowed(context.SessionKey))
+        {
+            _logger.LogWarning("Превышен лимит запросов для {SessionKey}", context.SessionKey);
+            await platform.SendTextAsync(message.ChatId, "Слишком много запросов. Пожалуйста, подождите несколько секунд.", ct: ct);
+            return;
+        }
+
+        // Логирование метаданных на уровне Debug для защиты PII/чувствительных данных пользователя
+        _logger.LogDebug(
+            "Маршрутизация сообщения: Platform={Platform}, ChatId={ChatId}, UserId={UserId}",
+            message.Platform, message.ChatId, message.UserId);
 
         // 1. Нажатие на Inline Callback-кнопку: формат "commandName:payload"
         if (!string.IsNullOrEmpty(message.CallbackData))
@@ -67,7 +80,8 @@ public sealed class CommandDispatcher
         }
 
         // 2. Проверка наличия активной сессии диалога (например, ожидание текста поиска)
-        var sessionState = await _sessions.GetStateAsync(message.UserId, ct);
+        var sessionKey = context.SessionKey;
+        var sessionState = await _sessions.GetStateAsync(sessionKey, ct);
         if (sessionState is not null)
         {
             var sessionCommandKey = sessionState.AwaitingInputFor.Trim().ToLowerInvariant();
@@ -79,7 +93,7 @@ public sealed class CommandDispatcher
             }
 
             _logger.LogWarning("Сессия ссылается на неизвестную команду '{Key}'. Очистка устаревшей сессии.", sessionCommandKey);
-            await _sessions.ClearStateAsync(message.UserId, ct);
+            await _sessions.ClearStateAsync(sessionKey, ct);
         }
 
         // 3. Вызов команды по текстовому имени (например, "/start" или "start")

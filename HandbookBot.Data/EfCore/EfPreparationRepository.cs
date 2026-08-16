@@ -13,6 +13,8 @@ public sealed class EfPreparationRepository : IPreparationRepository
 
     public async Task<PagedResult<Preparation>> GetPageAsync(int page, int pageSize, CancellationToken ct = default)
     {
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
         var total = await _db.Preparations.CountAsync(ct);
         var items = await _db.Preparations
             .OrderByDescending(p => p.Price)
@@ -26,6 +28,13 @@ public sealed class EfPreparationRepository : IPreparationRepository
 
     public async Task<PagedResult<Preparation>> SearchAsync(string query, int page, int pageSize, CancellationToken ct = default)
     {
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+        if (query.Length > 200)
+        {
+            query = query[..200];
+        }
+
         var q = query.Trim()
             .Replace(@"\", @"\\")
             .Replace("%", @"\%")

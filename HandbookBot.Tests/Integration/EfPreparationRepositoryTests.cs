@@ -91,4 +91,21 @@ public class EfPreparationRepositoryTests : IDisposable
         Assert.Equal(1, result2.TotalCount);
         Assert.Equal("Prep_test", result2.Items[0].Name);
     }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-5)]
+    public async Task GetPageAsync_WithInvalidPage_ClampsToOne(int invalidPage)
+    {
+        // Arrange
+        _db.Preparations.Add(TestData.CreatePreparationEntity(1, "Prep 1", 10.0m, 1));
+        await _db.SaveChangesAsync();
+
+        // Act
+        var result = await _sut.GetPageAsync(invalidPage, 10);
+
+        // Assert
+        Assert.Equal(1, result.Page);
+        Assert.Single(result.Items);
+    }
 }

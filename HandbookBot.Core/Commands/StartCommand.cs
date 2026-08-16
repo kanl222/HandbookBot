@@ -11,7 +11,7 @@ public sealed class StartCommand : IBotCommand
     public async Task ExecuteAsync(BotContext context, IncomingMessage message, CancellationToken ct = default)
     {
         // Сбрасываем возможную сессию диалога
-        await context.Sessions.ClearStateAsync(context.UserId, ct);
+        await context.Sessions.ClearStateAsync(context.SessionKey, ct);
 
         var keyboard = BotKeyboard.SingleColumn(
             BotButton.Callback("Список препаратов", "preparations:1"),

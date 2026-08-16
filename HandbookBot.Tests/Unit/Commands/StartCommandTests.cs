@@ -30,7 +30,7 @@ public class StartCommandTests
         await _sut.ExecuteAsync(context, message);
 
         // Assert
-        await _sessions.Received(1).ClearStateAsync("user-1", Arg.Any<CancellationToken>());
+        await _sessions.Received(1).ClearStateAsync("telegram:user-1", Arg.Any<CancellationToken>());
 
         var sent = Assert.Single(_platform.SentMessages);
         Assert.Equal("chat-1", sent.ChatId);

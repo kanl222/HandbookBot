@@ -18,6 +18,8 @@ public sealed class InMemoryPharmacyRepository : IPharmacyRepository
 
     public Task<PagedResult<Pharmacy>> GetPageAsync(int page, int pageSize, CancellationToken ct = default)
     {
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
         var items = Data
             .Skip((page - 1) * pageSize)
             .Take(pageSize)

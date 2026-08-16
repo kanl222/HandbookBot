@@ -28,6 +28,8 @@ public sealed class InMemoryPreparationRepository : IPreparationRepository
 
     public Task<PagedResult<Preparation>> GetPageAsync(int page, int pageSize, CancellationToken ct = default)
     {
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
         var items = Sorted
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
@@ -38,6 +40,13 @@ public sealed class InMemoryPreparationRepository : IPreparationRepository
 
     public Task<PagedResult<Preparation>> SearchAsync(string query, int page, int pageSize, CancellationToken ct = default)
     {
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+        if (query.Length > 200)
+        {
+            query = query[..200];
+        }
+
         var q = query.Trim().ToLowerInvariant();
         var filtered = Sorted
             .Where(p => p.Name.Contains(q, StringComparison.OrdinalIgnoreCase))

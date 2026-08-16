@@ -31,7 +31,7 @@ public sealed class PreparationSearchCommand : IBotCommand
             if (action == "begin")
             {
                 await context.Sessions.SetStateAsync(
-                    context.UserId,
+                    context.SessionKey,
                     new UserDialogState(AwaitingKey),
                     TimeSpan.FromMinutes(10),
                     ct);
@@ -45,7 +45,8 @@ public sealed class PreparationSearchCommand : IBotCommand
             // Пагинация: "prepsearch:{page}" (запрос извлекается из сессии)
             if (int.TryParse(action, out var pg))
             {
-                var sessionState = await context.Sessions.GetStateAsync(context.UserId, ct);
+                pg = Math.Max(1, pg);
+                var sessionState = await context.Sessions.GetStateAsync(context.SessionKey, ct);
                 var query = sessionState?.SearchQuery;
 
                 if (string.IsNullOrWhiteSpace(query))
@@ -65,6 +66,10 @@ public sealed class PreparationSearchCommand : IBotCommand
 
         // Шаг 2: сессионный ввод — текст от пользователя
         var searchText = message.Text?.Trim() ?? string.Empty;
+        if (searchText.Length > 200)
+        {
+            searchText = searchText[..200];
+        }
 
         if (string.IsNullOrWhiteSpace(searchText))
         {
@@ -77,7 +82,7 @@ public sealed class PreparationSearchCommand : IBotCommand
 
         // Сохраняем поисковый запрос в сессию для последующей пагинации
         await context.Sessions.SetStateAsync(
-            context.UserId,
+            context.SessionKey,
             new UserDialogState(AwaitingKey) { SearchQuery = searchText },
             TimeSpan.FromMinutes(10),
             ct);
