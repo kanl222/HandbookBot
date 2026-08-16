@@ -21,7 +21,7 @@ builder.Logging.AddConsole();
 builder.Services.AddMemoryCache();
 // Регистрирует DbContext (EF Core) и репозитории справочников
 builder.Services.AddHandbookData(builder.Configuration);
-Сообщени
+
 // -------------------- 2. Ядро и Сервисы (Core Layer) --------------------
 // Хранилище сессий пользователей (InMemory или Redis в будущем)
 builder.Services.AddDistributedMemoryCache();
