@@ -41,23 +41,29 @@ public sealed class PreparationsListCommand : IBotCommand
         var sb = new System.Text.StringBuilder();
         sb.AppendLine($"*Препараты* (стр. {result.Page}/{result.TotalPages}):\n");
 
-        foreach (var p in result.Items)
+        for (var i = 0; i < result.Items.Count; i++)
         {
+            var p = result.Items[i];
+            var num = i + 1;
             var status = p.IsAvailable ? "В наличии" : "Нет в наличии";
-            sb.AppendLine($"*{p.Name}*");
+            sb.AppendLine($"{num}. *{p.Name}*");
             sb.AppendLine($"   Цена: {p.Price:N2} руб. | {status}");
             sb.AppendLine();
         }
 
-        // Строим клавиатуру: кнопка геолокации под каждым препаратом
+        // Строим клавиатуру: кнопки геолокации с номерами в один ряд
         var rows = new List<IReadOnlyList<BotButton>>();
 
-        foreach (var p in result.Items)
+        var mapButtons = new List<BotButton>();
+        for (var i = 0; i < result.Items.Count; i++)
         {
-            rows.Add(new[]
-            {
-                BotButton.Callback("На карте", $"pharmmap:{p.PharmacyId}")
-            });
+            var p = result.Items[i];
+            var num = i + 1;
+            mapButtons.Add(BotButton.Callback($"{num}", $"pharmmap:{p.PharmacyId}"));
+        }
+        if (mapButtons.Count > 0)
+        {
+            rows.Add(mapButtons);
         }
 
         // Пагинация

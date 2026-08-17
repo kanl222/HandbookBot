@@ -40,12 +40,11 @@ public sealed class PharmacyMapCommand : IBotCommand
                     BotButton.Callback("Главное меню", "start:menu")));
             return;
         }
-
+        await context.SendLocationAsync(pharmacy.Latitude, pharmacy.Longitude);
         await context.ReplyAsync(
             $"*{pharmacy.Name}*\n{pharmacy.Address}\nТел: {pharmacy.Contact}",
             BotKeyboard.SingleColumn(
                 BotButton.Callback("Аптечные пункты", "pharmacies:1"),
                 BotButton.Callback("Главное меню", "start:menu")));
-        await context.SendLocationAsync(pharmacy.Latitude, pharmacy.Longitude);
     }
 }
