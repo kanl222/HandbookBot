@@ -7,6 +7,7 @@ COPY ["HandbookBot.Core/HandbookBot.Core.csproj", "HandbookBot.Core/"]
 COPY ["HandbookBot.Data/HandbookBot.Data.csproj", "HandbookBot.Data/"]
 COPY ["HandbookBot.Telegram/HandbookBot.Telegram.csproj", "HandbookBot.Telegram/"]
 COPY ["HandbookBot.Max/HandbookBot.Max.csproj", "HandbookBot.Max/"]
+COPY ["external/max-bot-dotnet/MAX.Bot/MAX.Bot.csproj", "external/max-bot-dotnet/MAX.Bot/"]
 RUN dotnet restore "HandbookBot/HandbookBot.csproj"
 
 # Копируем остальной код и собираем

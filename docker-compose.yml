@@ -16,5 +16,5 @@ services:
 
       - Data__UseDatabase=${DATA_USE_DATABASE:-true}
       - Data__ConnectionString=${DATA_CONNECTION_STRING}
-    ports:
-      - ":8080"
+    expose:
+      - "8080"
