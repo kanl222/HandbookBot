@@ -6,8 +6,8 @@ services:
     restart: always
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      
-      - Telegram__Enabled=${Telegram_ENABLED:-false}
+
+      - Telegram__Enabled=${TELEGRAM_ENABLED:-false}
       - Telegram__Token=${TELEGRAM_TOKEN}
       - Telegram__WebhookUrl=${TELEGRAM_WEBHOOK_URL}
 
