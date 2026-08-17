@@ -5,4 +5,5 @@
   <Project Path="HandbookBot.Telegram/HandbookBot.Telegram.csproj" Id="9f0a7fab-1f0b-4d9b-8643-579677e424d7" />
   <Project Path="HandbookBot.Tests/HandbookBot.Tests.csproj" />
   <Project Path="HandbookBot/HandbookBot.csproj" />
+  <Project Path="external/max-bot-dotnet/MAX.Bot/MAX.Bot.csproj" />
 </Solution>

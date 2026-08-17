@@ -8,18 +8,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\HandbookBot.Core\HandbookBot.Core.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="MAX.Bot">
-      <HintPath>libs\MAX.Bot.dll</HintPath>
-    </Reference>
+    <ProjectReference Include="..\external\max-bot-dotnet\MAX.Bot\MAX.Bot.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.8" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.8" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.8" />
   </ItemGroup>
 
 </Project>
