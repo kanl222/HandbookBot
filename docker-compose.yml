@@ -4,8 +4,6 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: always
-    env_file:
-      - .env
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
 
@@ -17,7 +15,11 @@ services:
       - Max__Token=${MAX_TOKEN}
       - Max__TimeoutSeconds=${MAX_TIMEOUT_SECONDS:-30}
 
-      - Data__UseDatabase=${DATA_USE_DATABASE:-true}
-      - Data__ConnectionString=${DATA_CONNECTION_STRING}
+      # api | inmemory | database
+      - Data__Source=${DATA_SOURCE:-inmemory}
+      - Data__ApiBaseUrl=${DATA_API_BASE_URL}
+
+      # Закомментировано — используется только при Data__Source=database
+      # - Data__ConnectionString=${DATA_CONNECTION_STRING}
     expose:
       - "8080"

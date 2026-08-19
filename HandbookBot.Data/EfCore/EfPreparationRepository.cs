@@ -52,4 +52,10 @@ public sealed class EfPreparationRepository : IPreparationRepository
 
         return new PagedResult<Preparation>(items, total, page, pageSize);
     }
+
+    public async Task<Preparation?> GetByIdAsync(int id, CancellationToken ct = default)
+    {
+        var entity = await _db.Preparations.FindAsync([id], ct);
+        return entity?.ToDomain();
+    }
 }

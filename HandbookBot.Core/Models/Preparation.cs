@@ -6,4 +6,5 @@ public sealed record Preparation(
     string Name,
     decimal Price,
     int PharmacyId,
-    bool IsAvailable);
+    bool IsAvailable,
+    string Description = "");

@@ -22,6 +22,7 @@ public static class CommandsRegistration
 
         // Приватные (только через callback/сессию)
         services.AddKeyedScoped<IBotCommand, PreparationSearchCommand>("prepsearch");
+        services.AddKeyedScoped<IBotCommand, PreparationDetailCommand>("prepinfo");
         services.AddKeyedScoped<IBotCommand, PharmacyMapCommand>("pharmmap");
 
         return services;

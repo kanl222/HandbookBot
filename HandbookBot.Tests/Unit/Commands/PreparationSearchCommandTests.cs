@@ -9,6 +9,7 @@ namespace HandbookBot.Tests.Unit.Commands;
 public class PreparationSearchCommandTests
 {
     private readonly IPreparationRepository _repo;
+    private readonly IPharmacyRepository _pharmacyRepo;
     private readonly PreparationSearchCommand _sut;
     private readonly FakeMessagingPlatform _platform;
     private readonly IUserSessionStore _sessions;
@@ -17,7 +18,8 @@ public class PreparationSearchCommandTests
     public PreparationSearchCommandTests()
     {
         _repo = Substitute.For<IPreparationRepository>();
-        _sut = new PreparationSearchCommand(_repo);
+        _pharmacyRepo = Substitute.For<IPharmacyRepository>();
+        _sut = new PreparationSearchCommand(_repo, _pharmacyRepo);
         _platform = new FakeMessagingPlatform();
         _sessions = Substitute.For<IUserSessionStore>();
         _context = new BotContext("chat", "user", "Test", _platform, _sessions);
@@ -59,13 +61,21 @@ public class PreparationSearchCommandTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_ValidText_ShowsResults()
+    public async Task ExecuteAsync_ValidText_ShowsResultsWithPharmacy()
     {
         // Arrange
         var msg = new IncomingMessage("chat", "user", "Aspirin", null, "Test");
-        var items = new[] { TestData.CreatePreparation(1, "Aspirin C", 100m, 1) };
+        var items = new[]
+        {
+            TestData.CreatePreparation(1, "Aspirin C", 100m, 1),
+            TestData.CreatePreparation(2, "Aspirin Cardio", 200m, 2)
+        };
         _repo.SearchAsync("Aspirin", 1, 5, Arg.Any<CancellationToken>())
-            .Returns(new PagedResult<Preparation>(items, 1, 1, 5));
+            .Returns(new PagedResult<Preparation>(items, 2, 1, 5));
+        _pharmacyRepo.GetByIdAsync(1, Arg.Any<CancellationToken>())
+            .Returns(TestData.CreatePharmacy(1, "Аптека №1", "ул. Ленина, 1"));
+        _pharmacyRepo.GetByIdAsync(2, Arg.Any<CancellationToken>())
+            .Returns(TestData.CreatePharmacy(2, "Аптека №2", "пр. Маркса, 34"));
 
         // Act
         await _sut.ExecuteAsync(_context, msg);
@@ -73,7 +83,20 @@ public class PreparationSearchCommandTests
         // Assert
         var sent = Assert.Single(_platform.SentMessages);
         Assert.Contains("Результаты поиска «Aspirin»", sent.Text);
-        Assert.Contains("Aspirin C", sent.Text);
+        Assert.Contains("1. *Aspirin C*", sent.Text);
+        Assert.Contains("Аптека: Аптека №1", sent.Text);
+        Assert.Contains("Адрес: ул. Ленина, 1", sent.Text);
+        Assert.Contains("2. *Aspirin Cardio*", sent.Text);
+        Assert.Contains("Аптека: Аптека №2", sent.Text);
+        Assert.Contains("Адрес: пр. Маркса, 34", sent.Text);
+
+        Assert.NotNull(sent.Keyboard);
+        var prepRow = sent.Keyboard.Rows[0];
+        Assert.Equal(2, prepRow.Count);
+        Assert.Equal("1", prepRow[0].Text);
+        Assert.Equal("prepinfo:1", prepRow[0].Payload);
+        Assert.Equal("2", prepRow[1].Text);
+        Assert.Equal("prepinfo:2", prepRow[1].Payload);
     }
 
     [Fact]
@@ -87,6 +110,8 @@ public class PreparationSearchCommandTests
         var items = new[] { TestData.CreatePreparation(1, "Aspirin C", 100m, 1) };
         _repo.SearchAsync("Aspirin", 2, 5, Arg.Any<CancellationToken>())
             .Returns(new PagedResult<Preparation>(items, 6, 2, 5));
+        _pharmacyRepo.GetByIdAsync(1, Arg.Any<CancellationToken>())
+            .Returns(TestData.CreatePharmacy(1, "Аптека №1", "ул. Ленина, 1"));
 
         // Act
         await _sut.ExecuteAsync(_context, msg);
@@ -95,6 +120,7 @@ public class PreparationSearchCommandTests
         var sent = Assert.Single(_platform.SentMessages);
         Assert.Contains("Результаты поиска «Aspirin»", sent.Text);
         Assert.Contains("стр. 2/2", sent.Text);
+        Assert.Contains("Аптека: Аптека №1", sent.Text);
     }
 
     [Fact]

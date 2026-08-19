@@ -15,8 +15,13 @@ public sealed class PreparationSearchCommand : IBotCommand
     private const string AwaitingKey = "prepsearch";
 
     private readonly IPreparationRepository _repo;
+    private readonly IPharmacyRepository _pharmacyRepo;
 
-    public PreparationSearchCommand(IPreparationRepository repo) => _repo = repo;
+    public PreparationSearchCommand(IPreparationRepository repo, IPharmacyRepository pharmacyRepo)
+    {
+        _repo = repo;
+        _pharmacyRepo = pharmacyRepo;
+    }
 
     public string Name => "prepsearch";
 
@@ -109,14 +114,40 @@ public sealed class PreparationSearchCommand : IBotCommand
         var sb = new System.Text.StringBuilder();
         sb.AppendLine($"Результаты поиска «{escapedQueryTitle}» (стр. {result.Page}/{result.TotalPages}, всего {result.TotalCount}):\n");
 
-        foreach (var p in result.Items)
+        for (var i = 0; i < result.Items.Count; i++)
         {
+            var p = result.Items[i];
+            var num = i + 1;
             var status = p.IsAvailable ? "В наличии" : "Нет в наличии";
             var escapedName = EscapeMarkdown(p.Name);
-            sb.AppendLine($"*{escapedName}* — {p.Price:N2} руб. ({status})");
+            var pharmacy = await _pharmacyRepo.GetByIdAsync(p.PharmacyId, ct);
+
+            sb.AppendLine($"{num}. *{escapedName}*");
+            sb.AppendLine($"   Цена: {p.Price:N2} руб. | {status}");
+            if (pharmacy is not null)
+            {
+                var escapedPharmName = EscapeMarkdown(pharmacy.Name);
+                var escapedAddress = EscapeMarkdown(pharmacy.Address);
+                sb.AppendLine($"   Аптека: {escapedPharmName}");
+                sb.AppendLine($"   Адрес: {escapedAddress}");
+            }
+            sb.AppendLine();
         }
 
         var rows = new List<IReadOnlyList<BotButton>>();
+
+        var prepButtons = new List<BotButton>();
+        for (var i = 0; i < result.Items.Count; i++)
+        {
+            var p = result.Items[i];
+            var num = i + 1;
+            prepButtons.Add(BotButton.Callback($"{num}", $"prepinfo:{p.Id}"));
+        }
+        if (prepButtons.Count > 0)
+        {
+            rows.Add(prepButtons);
+        }
+
         var navRow = new List<BotButton>();
         if (result.Page > 1)
             navRow.Add(BotButton.Callback("Назад", $"prepsearch:{result.Page - 1}"));

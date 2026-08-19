@@ -51,19 +51,19 @@ public sealed class PreparationsListCommand : IBotCommand
             sb.AppendLine();
         }
 
-        // Строим клавиатуру: кнопки геолокации с номерами в один ряд
+        // Строим клавиатуру: кнопки перехода к подробному описанию препаратов (1, 2, 3...)
         var rows = new List<IReadOnlyList<BotButton>>();
 
-        var mapButtons = new List<BotButton>();
+        var prepButtons = new List<BotButton>();
         for (var i = 0; i < result.Items.Count; i++)
         {
             var p = result.Items[i];
             var num = i + 1;
-            mapButtons.Add(BotButton.Callback($"{num}", $"pharmmap:{p.PharmacyId}"));
+            prepButtons.Add(BotButton.Callback($"{num}", $"prepinfo:{p.Id}"));
         }
-        if (mapButtons.Count > 0)
+        if (prepButtons.Count > 0)
         {
-            rows.Add(mapButtons);
+            rows.Add(prepButtons);
         }
 
         // Пагинация

@@ -36,7 +36,7 @@ public class PreparationsListCommandTests
         // Assert
         var sent = Assert.Single(_platform.SentMessages);
         Assert.Equal("Список препаратов пуст.", sent.Text);
-        Assert.Null(sent.Keyboard);
+        Assert.NotNull(sent.Keyboard);
     }
 
     [Fact]
@@ -66,15 +66,15 @@ public class PreparationsListCommandTests
         Assert.Contains("Нет в наличии", sent.Text);
 
         Assert.NotNull(sent.Keyboard);
-        // Buttons: 1 map buttons row ( 1,  2), 1 nav row (Назад, Вперёд), 1 search button, 1 menu button -> 4 rows total
+        // Buttons: 1 prep buttons row (1, 2), 1 nav row (Назад, Вперёд), 1 search button, 1 menu button -> 4 rows total
         Assert.Equal(4, sent.Keyboard.Rows.Count);
 
-        var mapRow = sent.Keyboard.Rows[0];
-        Assert.Equal(2, mapRow.Count);
-        Assert.Equal("1", mapRow[0].Text);
-        Assert.Equal("pharmmap:1", mapRow[0].Payload);
-        Assert.Equal("2", mapRow[1].Text);
-        Assert.Equal("pharmmap:2", mapRow[1].Payload);
+        var prepRow = sent.Keyboard.Rows[0];
+        Assert.Equal(2, prepRow.Count);
+        Assert.Equal("1", prepRow[0].Text);
+        Assert.Equal("prepinfo:1", prepRow[0].Payload);
+        Assert.Equal("2", prepRow[1].Text);
+        Assert.Equal("prepinfo:2", prepRow[1].Payload);
         
         var navRow = sent.Keyboard.Rows[1];
         Assert.Equal(2, navRow.Count); // Back, Forward
