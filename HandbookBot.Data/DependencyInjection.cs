@@ -36,8 +36,10 @@ public static class DependencyInjection
                 ?? throw new InvalidOperationException(
                     $"Конфиг {RefInfoApiOptions.Section}:BaseUrl обязателен при Data:Source=api.");
 
-            // JwtAuthHandler — Singleton, т.к. хранит кэш токена
-            services.AddSingleton<JwtAuthHandler>();
+            // JwtTokenProvider — Singleton, хранит кэш токена
+            services.AddSingleton<JwtTokenProvider>();
+            // JwtAuthHandler — Transient для IHttpClientFactory
+            services.AddTransient<JwtAuthHandler>();
 
             void ConfigureClient(IHttpClientBuilder b) => b
                 .ConfigureHttpClient(client =>
@@ -51,7 +53,7 @@ public static class DependencyInjection
             ConfigureClient(services.AddHttpClient<ApiPharmacyRepository>());
             ConfigureClient(services.AddHttpClient<ApiFaqRepository>());
 
-            services.AddScoped<IPreparationRepository, ApiPreparationRepository>();
+            services.AddScoped<IPreparationRepository>(sp => sp.GetRequiredService<ApiPreparationRepository>());
 
             // Для аптек и FAQ оборачиваем кэшем
             services.AddScoped<IPharmacyRepository>(sp =>

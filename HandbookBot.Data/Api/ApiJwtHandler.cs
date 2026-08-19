@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
@@ -24,58 +25,47 @@ public sealed class RefInfoApiOptions
 }
 
 /// <summary>
-/// DelegatingHandler, который перед каждым запросом добавляет JWT Bearer-токен.
-/// Токен кэшируется до истечения срока, после чего автоматически обновляется.
+/// Провайдер JWT-токенов (Singleton).
+/// Хранит кэшированный токен и обновляет его при истечении.
 /// </summary>
-public sealed class JwtAuthHandler : DelegatingHandler
+public sealed class JwtTokenProvider
 {
     private readonly RefInfoApiOptions _options;
-    private readonly ILogger<JwtAuthHandler> _logger;
+    private readonly ILogger<JwtTokenProvider> _logger;
 
     private string? _token;
     private DateTime _tokenExpiry = DateTime.MinValue;
     private readonly SemaphoreSlim _lock = new(1, 1);
 
-    public JwtAuthHandler(IOptions<RefInfoApiOptions> options, ILogger<JwtAuthHandler> logger)
+    public JwtTokenProvider(IOptions<RefInfoApiOptions> options, ILogger<JwtTokenProvider> logger)
     {
         _options = options.Value;
         _logger = logger;
     }
 
-    protected override async Task<HttpResponseMessage> SendAsync(
-        HttpRequestMessage request,
-        CancellationToken ct)
+    public void InvalidateToken()
     {
-        var token = await GetTokenAsync(ct);
-        request.Headers.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-
-        var response = await base.SendAsync(request, ct);
-
-        // Если 401 — токен протух, сбрасываем и пробуем один раз повторно
-        if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-        {
-            _token = null;
-            token = await GetTokenAsync(ct);
-            request.Headers.Authorization =
-                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-            response = await base.SendAsync(request, ct);
-        }
-
-        return response;
+        _token = null;
+        _tokenExpiry = DateTime.MinValue;
     }
 
-    private async Task<string> GetTokenAsync(CancellationToken ct)
+    public async Task<string?> GetTokenAsync(CancellationToken ct = default)
     {
+        // Если логин или пароль не заданы — пропускаем авторизацию (например, локальный mock API)
+        if (string.IsNullOrWhiteSpace(_options.Username) || string.IsNullOrWhiteSpace(_options.Password))
+            return null;
+
         if (_token is not null && DateTime.UtcNow < _tokenExpiry)
             return _token;
 
         await _lock.WaitAsync(ct);
         try
         {
-            // Double-check после захвата блокировки
             if (_token is not null && DateTime.UtcNow < _tokenExpiry)
                 return _token;
+
+            if (string.IsNullOrWhiteSpace(_options.BaseUrl))
+                return null;
 
             _logger.LogInformation("RefInfoApi: получение нового JWT-токена...");
 
@@ -91,11 +81,17 @@ public sealed class JwtAuthHandler : DelegatingHandler
                 ?? throw new InvalidOperationException("RefInfoApi: пустой ответ на /auth/login");
 
             _token = result.AccessToken;
-            // Обновляем за 1 минуту до истечения
-            _tokenExpiry = result.ExpiresAt.AddMinutes(-1).ToUniversalTime();
+            _tokenExpiry = result.ExpiresAt > DateTime.UtcNow 
+                ? result.ExpiresAt.AddMinutes(-1).ToUniversalTime() 
+                : DateTime.UtcNow.AddMinutes(30);
 
             _logger.LogInformation("RefInfoApi: JWT получен, действителен до {Expiry}", _tokenExpiry);
             return _token;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "RefInfoApi: ошибка при получении JWT-токена");
+            throw;
         }
         finally
         {
@@ -112,3 +108,44 @@ public sealed class JwtAuthHandler : DelegatingHandler
         public DateTime ExpiresAt { get; set; }
     }
 }
+
+/// <summary>
+/// DelegatingHandler (Transient), который перед каждым запросом добавляет JWT Bearer-токен.
+/// </summary>
+public sealed class JwtAuthHandler : DelegatingHandler
+{
+    private readonly JwtTokenProvider _tokenProvider;
+
+    public JwtAuthHandler(JwtTokenProvider tokenProvider)
+    {
+        _tokenProvider = tokenProvider;
+    }
+
+    protected override async Task<HttpResponseMessage> SendAsync(
+        HttpRequestMessage request,
+        CancellationToken ct)
+    {
+        var token = await _tokenProvider.GetTokenAsync(ct);
+        if (!string.IsNullOrEmpty(token))
+        {
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        }
+
+        var response = await base.SendAsync(request, ct);
+
+        // Если 401 — токен протух, сбрасываем и пробуем один раз повторно
+        if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized && !string.IsNullOrEmpty(token))
+        {
+            _tokenProvider.InvalidateToken();
+            var refreshedToken = await _tokenProvider.GetTokenAsync(ct);
+            if (!string.IsNullOrEmpty(refreshedToken))
+            {
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", refreshedToken);
+                response = await base.SendAsync(request, ct);
+            }
+        }
+
+        return response;
+    }
+}
+

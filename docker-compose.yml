@@ -18,8 +18,10 @@ services:
       # api | inmemory | database
       - Data__Source=${DATA_SOURCE:-inmemory}
       - Data__ApiBaseUrl=${DATA_API_BASE_URL}
-
-      # Закомментировано — используется только при Data__Source=database
-      # - Data__ConnectionString=${DATA_CONNECTION_STRING}
+      - RefInfoApi__BaseUrl=${REFINFOAPI__BASEURL:-${DATA_API_BASE_URL}}
+      - RefInfoApi__Username=${REFINFOAPI__USERNAME:-}
+      - RefInfoApi__Password=${REFINFOAPI__PASSWORD:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     expose:
       - "8080"
