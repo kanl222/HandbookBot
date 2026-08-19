@@ -4,6 +4,8 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: always
+    env_file:
+      - .env
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
 
