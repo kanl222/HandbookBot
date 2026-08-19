@@ -36,6 +36,13 @@ public static class DependencyInjection
                 ?? throw new InvalidOperationException(
                     $"Конфиг {RefInfoApiOptions.Section}:BaseUrl обязателен при Data:Source=api.");
 
+            if (!baseUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase) && 
+                !baseUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    $"Некорректный базовый URL API: '{baseUrl}'. URL должен начинаться с http:// или https:// (например, http://host.docker.internal:5131)");
+            }
+
             // JwtTokenProvider — Singleton, хранит кэш токена
             services.AddSingleton<JwtTokenProvider>();
             // JwtAuthHandler — Transient для IHttpClientFactory
