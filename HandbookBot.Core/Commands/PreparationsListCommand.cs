@@ -45,9 +45,19 @@ public sealed class PreparationsListCommand : IBotCommand
         {
             var p = result.Items[i];
             var num = i + 1;
-            var status = p.IsAvailable ? "В наличии" : "Нет в наличии";
-            sb.AppendLine($"{num}. *{p.Name}*");
-            sb.AppendLine($"   Цена: {p.Price:N2} руб. | {status}");
+
+            var statusDetail = p.IsAvailable
+                ? (p.AvailablePharmacyIds.Count > 1
+                    ? $"В наличии ({p.AvailablePharmacyIds.Count} аптеки)"
+                    : "В наличии")
+                : "Нет в наличии";
+
+            var summary = !string.IsNullOrWhiteSpace(p.Manufacturer)
+                ? $"Производитель: {p.Manufacturer} | {statusDetail}"
+                : $"Статус: {statusDetail}";
+
+            sb.AppendLine($"{num}. *{EscapeMarkdown(p.Name)}*");
+            sb.AppendLine($"   {EscapeMarkdown(summary)}");
             sb.AppendLine();
         }
 
@@ -80,5 +90,14 @@ public sealed class PreparationsListCommand : IBotCommand
 
         var keyboard = new BotKeyboard(rows);
         await context.ReplyAsync(sb.ToString(), keyboard);
+    }
+
+    private static string EscapeMarkdown(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return text;
+        return text.Replace("_", "\\_")
+                   .Replace("*", "\\*")
+                   .Replace("[", "\\[")
+                   .Replace("`", "\\`");
     }
 }

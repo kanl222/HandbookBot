@@ -34,7 +34,7 @@ public sealed class FaqCommand : IBotCommand
                     $"*{entry.Question}*\n\n{entry.Answer}",
                     BotKeyboard.SingleColumn(
                         BotButton.Callback("Назад к вопросам", "faq:list"),
-                        BotButton.Callback("Главное меню", "start:menu")));
+                        BotButton.Callback("В главное меню", "start:menu")));
                 return;
             }
         }
@@ -42,11 +42,11 @@ public sealed class FaqCommand : IBotCommand
         // Список вопросов
         var buttons = entries
             .Select(e => BotButton.Callback(e.Question, $"faq:{e.Id}"))
-            .Append(BotButton.Callback("Главное меню", "start:menu"))
+            .Append(BotButton.Callback("В главное меню", "start:menu"))
             .ToArray();
 
         await context.ReplyAsync(
-            "*Часто задаваемые вопросы*\n\nВыберите вопрос:",
+            "*Часто задаваемые вопросы (FAQ)*\n\nВыберите интересующий вас вопрос:",
             BotKeyboard.SingleColumn(buttons));
     }
 }

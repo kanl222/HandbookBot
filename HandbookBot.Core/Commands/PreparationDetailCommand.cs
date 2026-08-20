@@ -50,24 +50,57 @@ public sealed class PreparationDetailCommand : IBotCommand
         var sb = new System.Text.StringBuilder();
         sb.AppendLine($"*{EscapeMarkdown(prep.Name)}*\n");
 
-        if (!string.IsNullOrWhiteSpace(prep.Description))
+        if (!string.IsNullOrWhiteSpace(prep.Manufacturer))
+            sb.AppendLine($"• Производитель: {EscapeMarkdown(prep.Manufacturer)}");
+
+        var dosage = !string.IsNullOrWhiteSpace(prep.Dosage) ? prep.Dosage : prep.Description;
+        if (!string.IsNullOrWhiteSpace(dosage))
+            sb.AppendLine($"• Форма / дозировка: {EscapeMarkdown(dosage)}");
+
+        if (prep.IsAvailable && prep.TotalPacks > 0)
         {
-            sb.AppendLine($"*Описание:*\n{EscapeMarkdown(prep.Description)}\n");
+            sb.AppendLine($"• Статус: В наличии (всего {prep.TotalPacks:0.##} уп.)");
+
+            var seriaStr = !string.IsNullOrWhiteSpace(prep.Series) ? $"Серия: {prep.Series}" : string.Empty;
+            var expStr = prep.ExpirationDate.HasValue ? $" (годен до {prep.ExpirationDate.Value:dd.MM.yyyy})" : string.Empty;
+            if (!string.IsNullOrEmpty(seriaStr) || !string.IsNullOrEmpty(expStr))
+            {
+                sb.AppendLine($"• {EscapeMarkdown((seriaStr + expStr).Trim())}");
+            }
+
+            if (prep.AvailableStocks.Count > 0)
+            {
+                sb.AppendLine();
+                sb.AppendLine("Наличие в аптечных пунктах:");
+                foreach (var stock in prep.AvailableStocks)
+                {
+                    var addr = !string.IsNullOrWhiteSpace(stock.Address) ? $" ({stock.Address})" : string.Empty;
+                    sb.AppendLine($"• {EscapeMarkdown(stock.PharmacyName)}{EscapeMarkdown(addr)} — {stock.PackQty:0.##} уп.");
+                }
+            }
+        }
+        else
+        {
+            sb.AppendLine("• Статус: Нет в наличии в аптечных пунктах");
         }
 
-        var status = prep.IsAvailable ? "В наличии" : "Нет в наличии";
-        sb.AppendLine($"*Цена:* {prep.Price:N2} руб. | {status}");
+        var rows = new List<IReadOnlyList<BotButton>>();
 
-        if (pharmacy is not null)
+        // Кнопки для каждого аптечного пункта с наличием
+        var pharmacyIds = prep.AvailablePharmacyIds;
+        foreach (var phId in pharmacyIds)
         {
-            sb.AppendLine($"*Аптечный пункт:* {EscapeMarkdown(pharmacy.Name)}");
-            sb.AppendLine($"*Адрес:* {EscapeMarkdown(pharmacy.Address)}");
+            var ph = await _pharmacyRepo.GetByIdAsync(phId, ct);
+            var label = ph is not null ? $"Карта: {ph.Name}" : $"Аптечный пункт №{phId}";
+            rows.Add([BotButton.Callback(label, $"pharmmap:{phId}")]);
         }
 
-        var keyboard = BotKeyboard.SingleColumn(
-            BotButton.Callback("Аптечный пункт", $"pharmmap:{prep.PharmacyId}"),
-            BotButton.Callback("Главное меню", "start:menu"));
+        // Навигационные кнопки
+        rows.Add([BotButton.Callback("Все аптечные пункты", "pharmacies:1")]);
+        rows.Add([BotButton.Callback("Список препаратов", "preparations:1")]);
+        rows.Add([BotButton.Callback("Главное меню", "start:menu")]);
 
+        var keyboard = new BotKeyboard(rows);
         await context.ReplyAsync(sb.ToString(), keyboard);
     }
 

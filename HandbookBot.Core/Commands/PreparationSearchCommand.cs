@@ -118,19 +118,20 @@ public sealed class PreparationSearchCommand : IBotCommand
         {
             var p = result.Items[i];
             var num = i + 1;
-            var status = p.IsAvailable ? "В наличии" : "Нет в наличии";
             var escapedName = EscapeMarkdown(p.Name);
-            var pharmacy = await _pharmacyRepo.GetByIdAsync(p.PharmacyId, ct);
+
+            var statusDetail = p.IsAvailable
+                ? (p.AvailablePharmacyIds.Count > 1
+                    ? $"В наличии ({p.AvailablePharmacyIds.Count} аптеки)"
+                    : "В наличии")
+                : "Нет в наличии";
+
+            var summary = !string.IsNullOrWhiteSpace(p.Manufacturer)
+                ? $"Производитель: {p.Manufacturer} | {statusDetail}"
+                : $"Статус: {statusDetail}";
 
             sb.AppendLine($"{num}. *{escapedName}*");
-            sb.AppendLine($"   Цена: {p.Price:N2} руб. | {status}");
-            if (pharmacy is not null)
-            {
-                var escapedPharmName = EscapeMarkdown(pharmacy.Name);
-                var escapedAddress = EscapeMarkdown(pharmacy.Address);
-                sb.AppendLine($"   Аптека: {escapedPharmName}");
-                sb.AppendLine($"   Адрес: {escapedAddress}");
-            }
+            sb.AppendLine($"   {EscapeMarkdown(summary)}");
             sb.AppendLine();
         }
 

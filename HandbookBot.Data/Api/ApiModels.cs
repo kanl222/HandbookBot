@@ -38,9 +38,32 @@ public static class ApiPagedResultExtensions
 
 // ──────────────────────────── Drug → Preparation ────────────────────────────
 
+/// <summary>DTO остатка препарата в аптечном пункте из RefInfoAPI.</summary>
+public sealed class ApiDrugStock
+{
+    [JsonPropertyName("drugStoreId")]
+    public int DrugStoreId { get; set; }
+
+    [JsonPropertyName("drugStoreName")]
+    public string DrugStoreName { get; set; } = string.Empty;
+
+    [JsonPropertyName("address")]
+    public string Address { get; set; } = string.Empty;
+
+    [JsonPropertyName("packQty")]
+    public decimal PackQty { get; set; }
+
+    [JsonPropertyName("series")]
+    public string? Series { get; set; }
+
+    [JsonPropertyName("expirationDate")]
+    public DateOnly? ExpirationDate { get; set; }
+
+    public PreparationStock ToDomain() => new(DrugStoreId, DrugStoreName, Address, PackQty, Series, ExpirationDate);
+}
+
 /// <summary>
 /// DTO препарата из RefInfoAPI (GET /api/drugs).
-/// JSON: { "id", "name", "price", "drugStoreId", "isAvailable", "description" }
 /// </summary>
 public sealed class ApiPreparation
 {
@@ -50,20 +73,53 @@ public sealed class ApiPreparation
     [JsonPropertyName("name")]
     public string Name { get; set; } = string.Empty;
 
+    [JsonPropertyName("manufacturer")]
+    public string Manufacturer { get; set; } = string.Empty;
+
+    [JsonPropertyName("dosage")]
+    public string Dosage { get; set; } = string.Empty;
+
     [JsonPropertyName("description")]
     public string Description { get; set; } = string.Empty;
 
     [JsonPropertyName("price")]
     public decimal Price { get; set; }
 
-    /// <summary>RefInfoAPI возвращает drugStoreId (ранее pharmacyId).</summary>
     [JsonPropertyName("drugStoreId")]
     public int DrugStoreId { get; set; }
+
+    [JsonPropertyName("drugStoreIds")]
+    public List<int> DrugStoreIds { get; set; } = [];
 
     [JsonPropertyName("isAvailable")]
     public bool IsAvailable { get; set; }
 
-    public Preparation ToDomain() => new(Id, Name, Price, DrugStoreId, IsAvailable, Description);
+    [JsonPropertyName("totalPacks")]
+    public decimal TotalPacks { get; set; }
+
+    [JsonPropertyName("series")]
+    public string? Series { get; set; }
+
+    [JsonPropertyName("expirationDate")]
+    public DateOnly? ExpirationDate { get; set; }
+
+    [JsonPropertyName("stocks")]
+    public List<ApiDrugStock> Stocks { get; set; } = [];
+
+    public Preparation ToDomain() => new(
+        Id,
+        Name,
+        Price,
+        DrugStoreId,
+        IsAvailable,
+        Description,
+        DrugStoreIds.Count > 0 ? DrugStoreIds : (DrugStoreId > 0 ? [DrugStoreId] : []),
+        Manufacturer,
+        Dosage,
+        TotalPacks,
+        Series,
+        ExpirationDate,
+        Stocks.Select(s => s.ToDomain()).ToList());
 }
 
 // ──────────────────────────── DrugStore → Pharmacy ────────────────────────────
