@@ -7,9 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Нужен только для IKeyedServiceProvider / GetKeyedService в CommandFactory -->
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
+    <ProjectReference Include="..\external\BotEngine\BotEngine.Core\BotEngine.Core.csproj" />
   </ItemGroup>
 
 </Project>

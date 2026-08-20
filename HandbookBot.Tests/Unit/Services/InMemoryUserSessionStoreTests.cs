@@ -1,5 +1,5 @@
-using HandbookBot.Core.Models;
-using HandbookBot.Core.Services;
+using BotEngine.Core.Models;
+using BotEngine.Core.Services;
 
 namespace HandbookBot.Tests.Unit.Services;
 

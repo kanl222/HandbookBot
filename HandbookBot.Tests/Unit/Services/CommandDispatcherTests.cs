@@ -11,7 +11,6 @@ public class CommandDispatcherTests
 {
     private readonly ICommandFactory _factory;
     private readonly IUserSessionStore _sessions;
-    private readonly IRateLimiter _rateLimiter;
     private readonly CommandDispatcher _sut;
     private readonly FakeMessagingPlatform _platform;
 
@@ -19,11 +18,9 @@ public class CommandDispatcherTests
     {
         _factory = Substitute.For<ICommandFactory>();
         _sessions = Substitute.For<IUserSessionStore>();
-        _rateLimiter = Substitute.For<IRateLimiter>();
-        _rateLimiter.IsAllowed(Arg.Any<string>()).Returns(true);
         _platform = new FakeMessagingPlatform();
         
-        _sut = new CommandDispatcher(_factory, _sessions, _rateLimiter, NullLogger<CommandDispatcher>.Instance);
+        _sut = new CommandDispatcher(_factory, _sessions, NullLogger<CommandDispatcher>.Instance);
     }
 
     [Fact]
@@ -87,20 +84,5 @@ public class CommandDispatcherTests
 
         // Assert
         await command.Received(1).ExecuteAsync(Arg.Any<BotContext>(), msg, Arg.Any<CancellationToken>());
-    }
-
-    [Fact]
-    public async Task DispatchAsync_WhenRateLimited_SendsWarningMessage()
-    {
-        // Arrange
-        _rateLimiter.IsAllowed(Arg.Any<string>()).Returns(false);
-        var msg = new IncomingMessage("chat", "user", "/start", null, "Test");
-
-        // Act
-        await _sut.DispatchAsync(msg, _platform);
-
-        // Assert
-        var sent = Assert.Single(_platform.SentMessages);
-        Assert.Contains("Слишком много запросов", sent.Text);
     }
 }

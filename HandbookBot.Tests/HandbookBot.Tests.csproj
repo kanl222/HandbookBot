@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -23,6 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\HandbookBot.Core\HandbookBot.Core.csproj" />
     <ProjectReference Include="..\HandbookBot.Data\HandbookBot.Data.csproj" />
+    <ProjectReference Include="..\external\BotEngine\BotEngine.Core\BotEngine.Core.csproj" />
   </ItemGroup>
 
 </Project>

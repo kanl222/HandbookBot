@@ -25,4 +25,11 @@ public class FakeMessagingPlatform : IMessagingPlatform
         SentLocations.Add((chatId, latitude, longitude));
         return Task.CompletedTask;
     }
+
+    public Task SendFileAsync(string chatId, Stream content, string fileName, string? mimeType = null,
+        string? caption = null, BotKeyboard? keyboard = null, CancellationToken ct = default)
+        => Task.CompletedTask;
+
+    public Task<Stream> DownloadFileAsync(BotFile file, CancellationToken ct = default)
+        => Task.FromResult<Stream>(new MemoryStream());
 }

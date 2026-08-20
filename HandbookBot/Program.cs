@@ -1,11 +1,10 @@
+using BotEngine.Core;
+using BotEngine.Core.Interfaces;
+using BotEngine.Max;
+using BotEngine.Telegram;
 using HandbookBot;
-using HandbookBot.Core.Commands;
-using HandbookBot.Core.Interfaces;
-using HandbookBot.Core.Services;
 using HandbookBot.Data;
 using HandbookBot.Data.Caching;
-using HandbookBot.Max;
-using HandbookBot.Telegram;
 
 // Загружаем переменные из .env файла в переменные окружения процесса.
 // Это нужно сделать до создания builder.
@@ -22,16 +21,13 @@ builder.Services.AddMemoryCache();
 // Регистрирует DbContext (EF Core) и репозитории справочников
 builder.Services.AddHandbookData(builder.Configuration);
 
-// -------------------- 2. Ядро и Сервисы (Core Layer) --------------------
-// Хранилище сессий пользователей (InMemory или Redis в будущем)
+// -------------------- 2. Ядро и Сервисы BotEngine --------------------
+builder.Services.AddBotEngine();
+builder.Services.AddRateLimiting();
+
+// Хранилище сессий через распределенный кэш (IDistributedCache)
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSingleton<IUserSessionStore, DistributedCacheUserSessionStore>();
-builder.Services.AddSingleton<IRateLimiter, SlidingWindowRateLimiter>();
-
-// Диспетчер команд и фабрика команд регистрируются как Scoped,
-// чтобы корректно взаимодействовать с Scoped DbContext на каждый запрос
-builder.Services.AddScoped<CommandDispatcher>();
-builder.Services.AddScoped<ICommandFactory, CommandFactory>();
 
 // -------------------- 3. Команды Бота (Bot Commands) --------------------
 // Регистрирует все IBotCommand в DI через Keyed Service по имени команды
@@ -42,9 +38,8 @@ var telegramEnabled = builder.Configuration.GetValue<bool>("Telegram:Enabled");
 if (telegramEnabled)
 {
     var telegramToken = builder.Configuration["Telegram:Token"];
-    builder.Services.AddTelegramPlatform(telegramToken);
+    builder.Services.AddTelegramPlatform(telegramToken!);
 }
-
 
 // -------------------- 5. Адаптер MAX (MAX Adapter) --------------------─
 var maxEnabled = builder.Configuration.GetValue<bool>("Max:Enabled");

@@ -4,3 +4,6 @@
 [submodule "external/ref-info-api"]
 	path = external/ref-info-api
 	url = https://github.com/sh0rtener/ref-info-api.git
+[submodule "external/BotEngine"]
+	path = external/BotEngine
+	url = https://github.com/kanl222/BotEngine.git
