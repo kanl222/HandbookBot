@@ -50,7 +50,7 @@ public class CommandDispatcherTests
 
         // Assert
         var sent = Assert.Single(_platform.SentMessages);
-        Assert.Contains("Неизвестная кнопка", sent.Text);
+        Assert.Contains("Неизвестное действие", sent.Text);
     }
 
     [Fact]

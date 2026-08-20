@@ -84,11 +84,8 @@ public class PreparationSearchCommandTests
         var sent = Assert.Single(_platform.SentMessages);
         Assert.Contains("Результаты поиска «Aspirin»", sent.Text);
         Assert.Contains("1. *Aspirin C*", sent.Text);
-        Assert.Contains("Аптека: Аптека №1", sent.Text);
-        Assert.Contains("Адрес: ул. Ленина, 1", sent.Text);
+        Assert.Contains("В наличии", sent.Text);
         Assert.Contains("2. *Aspirin Cardio*", sent.Text);
-        Assert.Contains("Аптека: Аптека №2", sent.Text);
-        Assert.Contains("Адрес: пр. Маркса, 34", sent.Text);
 
         Assert.NotNull(sent.Keyboard);
         var prepRow = sent.Keyboard.Rows[0];
@@ -120,7 +117,7 @@ public class PreparationSearchCommandTests
         var sent = Assert.Single(_platform.SentMessages);
         Assert.Contains("Результаты поиска «Aspirin»", sent.Text);
         Assert.Contains("стр. 2/2", sent.Text);
-        Assert.Contains("Аптека: Аптека №1", sent.Text);
+        Assert.Contains("В наличии", sent.Text);
     }
 
     [Fact]

@@ -5,9 +5,10 @@ WORKDIR /src
 COPY ["HandbookBot/HandbookBot.csproj", "HandbookBot/"]
 COPY ["HandbookBot.Core/HandbookBot.Core.csproj", "HandbookBot.Core/"]
 COPY ["HandbookBot.Data/HandbookBot.Data.csproj", "HandbookBot.Data/"]
-COPY ["HandbookBot.Telegram/HandbookBot.Telegram.csproj", "HandbookBot.Telegram/"]
-COPY ["HandbookBot.Max/HandbookBot.Max.csproj", "HandbookBot.Max/"]
-COPY ["external/max-bot-dotnet/MAX.Bot/MAX.Bot.csproj", "external/max-bot-dotnet/MAX.Bot/"]
+COPY ["external/BotEngine/BotEngine.Core/BotEngine.Core.csproj", "external/BotEngine/BotEngine.Core/"]
+COPY ["external/BotEngine/BotEngine.Telegram/BotEngine.Telegram.csproj", "external/BotEngine/BotEngine.Telegram/"]
+COPY ["external/BotEngine/BotEngine.Max/BotEngine.Max.csproj", "external/BotEngine/BotEngine.Max/"]
+COPY ["external/BotEngine/external/max-bot-dotnet/MAX.Bot/MAX.Bot.csproj", "external/BotEngine/external/max-bot-dotnet/MAX.Bot/"]
 RUN dotnet restore "HandbookBot/HandbookBot.csproj"
 
 # Копируем остальной код и собираем
