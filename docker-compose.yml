@@ -1,9 +1,27 @@
 services:
+  api:
+    build:
+      context: external/ref-info-api
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "5131:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=${DB_CONNECTION_STRING}
+      - Jwt__Issuer=${JWT_ISSUER:-RefInfoAPI}
+      - Jwt__Audience=${JWT_AUDIENCE:-RefInfoAPIClient}
+      - Jwt__Key=${JWT_KEY:-REPLACE_THIS_WITH_A_STRONG_SECRET_KEY_32CHARS_MIN}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
   bot:
     build:
       context: .
       dockerfile: Dockerfile
     restart: always
+    depends_on:
+      - api
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
 
@@ -15,13 +33,11 @@ services:
       - Max__Token=${MAX_TOKEN}
       - Max__TimeoutSeconds=${MAX_TIMEOUT_SECONDS:-30}
 
-      # api | inmemory | database
-      - Data__Source=${DATA_SOURCE:-inmemory}
-      - Data__ApiBaseUrl=${DATA_API_BASE_URL}
-      - RefInfoApi__BaseUrl=${REFINFOAPI__BASEURL:-${DATA_API_BASE_URL}}
+      # Связь бота с сервисом API по внутренней сети Docker
+      - Data__Source=${DATA_SOURCE:-api}
+      - RefInfoApi__BaseUrl=${REFINFOAPI__BASEURL:-http://api:8080}
       - RefInfoApi__Username=${REFINFOAPI__USERNAME:-}
       - RefInfoApi__Password=${REFINFOAPI__PASSWORD:-}
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     expose:
       - "8080"
+
