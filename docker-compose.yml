@@ -38,6 +38,10 @@ services:
       - RefInfoApi__BaseUrl=${REFINFOAPI__BASEURL:-http://api:8080}
       - RefInfoApi__Username=${REFINFOAPI__USERNAME:-}
       - RefInfoApi__Password=${REFINFOAPI__PASSWORD:-}
+
+      # Настройки BotEngine
+      - BotEngine__RateLimit__MaxMessages=${RATE_LIMIT_MAX_MESSAGES:-30}
+      - BotEngine__RateLimit__WindowSeconds=${RATE_LIMIT_WINDOW_SECONDS:-60}
     expose:
       - "8080"
 
