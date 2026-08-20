@@ -1,5 +1,6 @@
 using BotEngine.Core.Models;
 using BotEngine.Core.Services;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace HandbookBot.Tests.Unit.Services;
 
@@ -9,7 +10,7 @@ public class InMemoryUserSessionStoreTests
 
     public InMemoryUserSessionStoreTests()
     {
-        _sut = new InMemoryUserSessionStore();
+        _sut = new InMemoryUserSessionStore(NullLogger<InMemoryUserSessionStore>.Instance);
     }
 
     [Fact]
@@ -34,7 +35,7 @@ public class InMemoryUserSessionStoreTests
 
         // Assert
         Assert.NotNull(actual);
-        Assert.Equal("test_cmd", actual.AwaitingInputFor);
+        Assert.Equal("test_cmd", actual!.Value.AwaitingInputFor);
     }
 
     [Fact]

@@ -15,7 +15,7 @@ public class InstructionCommandTests
     {
         _sut = new InstructionCommand();
         _platform = new FakeMessagingPlatform();
-        var sessions = Substitute.For<HandbookBot.Core.Interfaces.IUserSessionStore>();
+        var sessions = Substitute.For<IUserSessionStore>();
         _context = new BotContext("chat", "user", "Test", _platform, sessions);
     }
 

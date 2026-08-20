@@ -43,8 +43,8 @@ public class DistributedCacheUserSessionStoreTests
 
         // Assert
         Assert.NotNull(actual);
-        Assert.Equal("test_cmd", actual.AwaitingInputFor);
-        Assert.Equal("Aspirin", actual.SearchQuery);
+        Assert.Equal("test_cmd", actual!.Value.AwaitingInputFor);
+        Assert.Equal("Aspirin", actual!.Value.SearchQuery);
     }
 
     [Fact]

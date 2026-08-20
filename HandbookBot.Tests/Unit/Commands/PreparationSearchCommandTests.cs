@@ -37,7 +37,7 @@ public class PreparationSearchCommandTests
         // Assert
         await _sessions.Received(1).SetStateAsync(
             "test:user", 
-            Arg.Is<UserDialogState>(s => s != null && s.AwaitingInputFor == "prepsearch"),
+            Arg.Is<UserDialogState>(s => s.AwaitingInputFor == "prepsearch"),
             Arg.Any<TimeSpan?>(),
             Arg.Any<CancellationToken>());
 

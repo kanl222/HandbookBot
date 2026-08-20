@@ -20,7 +20,7 @@ public class CommandDispatcherTests
         _sessions = Substitute.For<IUserSessionStore>();
         _platform = new FakeMessagingPlatform();
         
-        _sut = new CommandDispatcher(_factory, _sessions, NullLogger<CommandDispatcher>.Instance);
+        _sut = new CommandDispatcher(_factory, _sessions, Enumerable.Empty<IBotMiddleware>(), NullLogger<CommandDispatcher>.Instance);
     }
 
     [Fact]
