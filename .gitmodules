@@ -1,3 +1,6 @@
 [submodule "external/max-bot-dotnet"]
 	path = external/max-bot-dotnet
 	url = https://github.com/kanl222/max-bot-dotnet.git
+[submodule "external/ref-info-api"]
+	path = external/ref-info-api
+	url = https://github.com/sh0rtener/ref-info-api.git
