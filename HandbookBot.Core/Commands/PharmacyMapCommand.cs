@@ -23,7 +23,8 @@ public sealed class PharmacyMapCommand : IBotCommand
         var parts = message.CallbackData.Split(':', 2);
         if (parts.Length < 2 || !int.TryParse(parts[1], out var pharmacyId))
         {
-            await context.ReplyAsync(
+            await context.ReplyOrEditAsync(
+                message,
                 "Некорректный идентификатор аптеки.",
                 BotKeyboard.SingleColumn(BotButton.Callback("Главное меню", "start:menu")));
             return;
@@ -33,7 +34,8 @@ public sealed class PharmacyMapCommand : IBotCommand
 
         if (pharmacy is null)
         {
-            await context.ReplyAsync(
+            await context.ReplyOrEditAsync(
+                message,
                 "Аптека не найдена.",
                 BotKeyboard.SingleColumn(
                     BotButton.Callback("Аптечные пункты", "pharmacies:1"),
@@ -41,7 +43,7 @@ public sealed class PharmacyMapCommand : IBotCommand
             return;
         }
         await context.SendLocationAsync(pharmacy.Latitude, pharmacy.Longitude);
-        await context.ReplyAsync(
+        await context.ReplyOrEditAsync(message,
             $"*{pharmacy.Name}*\n{pharmacy.Address}\nТел: {pharmacy.Contact}",
             BotKeyboard.SingleColumn(
                 BotButton.Callback("Аптечные пункты", "pharmacies:1"),

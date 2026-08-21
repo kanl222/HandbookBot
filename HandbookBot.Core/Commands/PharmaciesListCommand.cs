@@ -32,7 +32,8 @@ public sealed class PharmaciesListCommand : IBotCommand
 
         if (result.Items.Count == 0)
         {
-            await context.ReplyAsync(
+            await context.ReplyOrEditAsync(
+                message,
                 "Список аптечных пунктов пуст.",
                 BotKeyboard.SingleColumn(BotButton.Callback("Главное меню", "start:menu")));
             return;
@@ -68,6 +69,6 @@ public sealed class PharmaciesListCommand : IBotCommand
 
         rows.Add(new[] { BotButton.Callback("Главное меню", "start:menu") });
 
-        await context.ReplyAsync(sb.ToString(), new BotKeyboard(rows));
+        await context.ReplyOrEditAsync(message, sb.ToString(), new BotKeyboard(rows));
     }
 }

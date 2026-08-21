@@ -26,7 +26,7 @@ public sealed class InstructionCommand : IBotCommand
             "3. Для поиска медикамента нажмите *«Поиск препарата»* и введите его название ответным сообщением.\n" +
             "4. Для просмотра расположения аптеки нажмите кнопку *«Карта»* рядом с её описанием.\n\n";
 
-        return context.ReplyAsync(text,
+        return context.ReplyOrEditAsync(message, text,
             BotKeyboard.SingleColumn(BotButton.Callback("Главное меню", "start:menu")));
     }
 }

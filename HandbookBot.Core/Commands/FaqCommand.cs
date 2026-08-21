@@ -30,7 +30,7 @@ public sealed class FaqCommand : IBotCommand
             var entry = entries.FirstOrDefault(e => e.Id == entryId);
             if (entry is not null)
             {
-                await context.ReplyAsync(
+                await context.ReplyOrEditAsync(message,
                     $"*{entry.Question}*\n\n{entry.Answer}",
                     BotKeyboard.SingleColumn(
                         BotButton.Callback("Назад к вопросам", "faq:list"),
@@ -45,7 +45,7 @@ public sealed class FaqCommand : IBotCommand
             .Append(BotButton.Callback("В главное меню", "start:menu"))
             .ToArray();
 
-        await context.ReplyAsync(
+        await context.ReplyOrEditAsync(message, 
             "*Часто задаваемые вопросы (FAQ)*\n\nВыберите интересующий вас вопрос:",
             BotKeyboard.SingleColumn(buttons));
     }

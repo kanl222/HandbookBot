@@ -22,7 +22,7 @@ public sealed class StartCommand : IBotCommand
             BotButton.Callback("Контакты ГАУЗ ОАС", "contacts:show")
         );
 
-        await context.ReplyAsync(
+        await context.ReplyOrEditAsync(message,
             "Добро пожаловать в справочник льготных препаратов ГАУЗ ОАС!\n\n" +
             "Выберите раздел:",
             keyboard);

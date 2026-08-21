@@ -26,7 +26,7 @@ public sealed class ContactsCommand : IBotCommand
             "E-mail: office@oas56.ru\n" +
             "Сайт: https://gosapteka.orb.ru/";
 
-        return context.ReplyAsync(text,
+        return context.ReplyOrEditAsync(message, text,
             BotKeyboard.SingleColumn(BotButton.Callback("Главное меню", "start:menu")));
     }
 }

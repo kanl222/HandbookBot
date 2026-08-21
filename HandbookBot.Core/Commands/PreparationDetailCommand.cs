@@ -28,7 +28,8 @@ public sealed class PreparationDetailCommand : IBotCommand
         var parts = message.CallbackData.Split(':', 2);
         if (parts.Length < 2 || !int.TryParse(parts[1], out var prepId))
         {
-            await context.ReplyAsync(
+            await context.ReplyOrEditAsync(
+                message,
                 "Некорректный идентификатор препарата.",
                 BotKeyboard.SingleColumn(BotButton.Callback("Главное меню", "start:menu")));
             return;
@@ -37,7 +38,8 @@ public sealed class PreparationDetailCommand : IBotCommand
         var prep = await _preparationRepo.GetByIdAsync(prepId, ct);
         if (prep is null)
         {
-            await context.ReplyAsync(
+            await context.ReplyOrEditAsync(
+                message,
                 "Препарат не найден.",
                 BotKeyboard.SingleColumn(
                     BotButton.Callback("Список препаратов", "preparations:1"),
@@ -101,7 +103,7 @@ public sealed class PreparationDetailCommand : IBotCommand
         rows.Add([BotButton.Callback("Главное меню", "start:menu")]);
 
         var keyboard = new BotKeyboard(rows);
-        await context.ReplyAsync(sb.ToString(), keyboard);
+        await context.ReplyOrEditAsync(message, sb.ToString(), keyboard);
     }
 
     private static string EscapeMarkdown(string text)

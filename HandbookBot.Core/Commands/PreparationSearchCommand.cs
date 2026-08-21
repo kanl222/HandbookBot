@@ -41,9 +41,11 @@ public sealed class PreparationSearchCommand : IBotCommand
                     TimeSpan.FromMinutes(10),
                     ct);
 
-                await context.ReplyAsync(
+                await context.ReplyOrEditAsync(
+                    message,
                     "Введите название препарата или его часть для поиска:",
-                    BotKeyboard.SingleColumn(BotButton.Callback("Отмена", "start:menu")));
+                    BotKeyboard.SingleColumn(BotButton.Callback("Отмена", "start:menu")),
+                    ct);
                 return;
             }
 
@@ -56,15 +58,17 @@ public sealed class PreparationSearchCommand : IBotCommand
 
                 if (string.IsNullOrWhiteSpace(query))
                 {
-                    await context.ReplyAsync(
+                    await context.ReplyOrEditAsync(
+                        message,
                         "Время сессии поиска истекло. Пожалуйста, введите запрос заново:",
                         BotKeyboard.SingleColumn(
                             BotButton.Callback("Новый поиск", "prepsearch:begin"),
-                            BotButton.Callback("Главное меню", "start:menu")));
+                            BotButton.Callback("Главное меню", "start:menu")),
+                        ct);
                     return;
                 }
 
-                await ShowResultsAsync(context, query, pg, ct);
+                await ShowResultsAsync(context, message, query, pg, ct);
                 return;
             }
         }
@@ -79,9 +83,11 @@ public sealed class PreparationSearchCommand : IBotCommand
         if (string.IsNullOrWhiteSpace(searchText))
         {
             // Сессию не сбрасываем — пользователь остаётся в режиме ожидания ввода
-            await context.ReplyAsync(
+            await context.ReplyOrEditAsync(
+                message,
                 "Поисковый запрос не может быть пустым. Введите название препарата:",
-                BotKeyboard.SingleColumn(BotButton.Callback("Главное меню", "start:menu")));
+                BotKeyboard.SingleColumn(BotButton.Callback("Главное меню", "start:menu")),
+                ct);
             return;
         }
 
@@ -92,21 +98,23 @@ public sealed class PreparationSearchCommand : IBotCommand
             TimeSpan.FromMinutes(10),
             ct);
 
-        await ShowResultsAsync(context, searchText, 1, ct);
+        await ShowResultsAsync(context, message, searchText, 1, ct);
     }
 
-    private async Task ShowResultsAsync(BotContext context, string query, int page, CancellationToken ct)
+    private async Task ShowResultsAsync(BotContext context, IncomingMessage message, string query, int page, CancellationToken ct)
     {
         var result = await _repo.SearchAsync(query, page, PageSize, ct);
 
         if (result.TotalCount == 0)
         {
             var escapedQuery = EscapeMarkdown(query);
-            await context.ReplyAsync(
+            await context.ReplyOrEditAsync(
+                message,
                 $"По запросу «{escapedQuery}» ничего не найдено.",
                 BotKeyboard.SingleColumn(
                     BotButton.Callback("Новый поиск", "prepsearch:begin"),
-                    BotButton.Callback("Главное меню", "start:menu")));
+                    BotButton.Callback("Главное меню", "start:menu")),
+                ct);
             return;
         }
 
@@ -159,7 +167,7 @@ public sealed class PreparationSearchCommand : IBotCommand
         rows.Add(new[] { BotButton.Callback("Новый поиск", "prepsearch:begin") });
         rows.Add(new[] { BotButton.Callback("Главное меню", "start:menu") });
 
-        await context.ReplyAsync(sb.ToString(), new BotKeyboard(rows));
+        await context.ReplyOrEditAsync(message, sb.ToString(), new BotKeyboard(rows), ct);
     }
 
     private static string EscapeMarkdown(string text)

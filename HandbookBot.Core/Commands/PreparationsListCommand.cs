@@ -32,7 +32,8 @@ public sealed class PreparationsListCommand : IBotCommand
 
         if (result.Items.Count == 0)
         {
-            await context.ReplyAsync(
+            await context.ReplyOrEditAsync(
+                message,
                 "Список препаратов пуст.",
                 BotKeyboard.SingleColumn(BotButton.Callback("Главное меню", "start:menu")));
             return;
@@ -89,7 +90,7 @@ public sealed class PreparationsListCommand : IBotCommand
         rows.Add(new[] { BotButton.Callback("Главное меню", "start:menu") });
 
         var keyboard = new BotKeyboard(rows);
-        await context.ReplyAsync(sb.ToString(), keyboard);
+        await context.ReplyOrEditAsync(message, sb.ToString(), keyboard);
     }
 
     private static string EscapeMarkdown(string text)

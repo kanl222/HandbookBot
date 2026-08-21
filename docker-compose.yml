@@ -1,19 +1,21 @@
 services:
-  api:
-    build:
-      context: external/ref-info-api
-      dockerfile: Dockerfile
+                                                                                                                                                                                                                                                          
+  api:                                                                                                                                                                                                                                              
+    build:                                                                                                                                                                                                                                          
+      context: external/ref-info-api                                                                                                                                                                                                                
+      dockerfile: Dockerfile                                                                                                                                                                                                                        
+    depends_on:                                                                                                                                                                                                                                     
+      - mssql     
     restart: always
     ports:
-      - "5131:8080"
+      - "5131:8010"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=${DB_CONNECTION_STRING}
       - Jwt__Issuer=${JWT_ISSUER:-RefInfoAPI}
       - Jwt__Audience=${JWT_AUDIENCE:-RefInfoAPIClient}
       - Jwt__Key=${JWT_KEY:-REPLACE_THIS_WITH_A_STRONG_SECRET_KEY_32CHARS_MIN}
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+
 
   bot:
     build:
@@ -35,7 +37,7 @@ services:
 
       # Связь бота с сервисом API по внутренней сети Docker
       - Data__Source=${DATA_SOURCE:-api}
-      - RefInfoApi__BaseUrl=${REFINFOAPI__BASEURL:-http://api:8080}
+      - RefInfoApi__BaseUrl=${REFINFOAPI__BASEURL:-http://api:8010}
       - RefInfoApi__Username=${REFINFOAPI__USERNAME:-}
       - RefInfoApi__Password=${REFINFOAPI__PASSWORD:-}
 
