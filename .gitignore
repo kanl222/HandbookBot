@@ -52,3 +52,5 @@ appsettings.Local.json
 !?*.[Cc]ache/
 .env
 init-db.sql
+
+.vscode/*
