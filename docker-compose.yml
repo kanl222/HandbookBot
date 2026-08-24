@@ -1,20 +1,24 @@
 services:
-                                                                                                                                                                                                                                                          
-  api:                                                                                                                                                                                                                                              
-    build:                                                                                                                                                                                                                                          
-      context: external/ref-info-api                                                                                                                                                                                                                
-      dockerfile: Dockerfile                                                                                                                                                                                                                        
-    depends_on:                                                                                                                                                                                                                                     
-      - mssql     
+
+  api:
+    build:
+      context: external/ref-info-api
+      dockerfile: Dockerfile
     restart: always
     ports:
-      - "5131:8010"
+      - "5131:8011"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=${DB_CONNECTION_STRING}
+      - ConnectionStrings__GeoCacheConnection=${GEO_CACHE_CONNECTION_STRING:-Data Source=/app/data/geocache.db}
+      - Yandex__Geocoder__ApiKey=${YANDEX_GEOCODER_API_KEY:-}
+      - Yandex__Geocoder__BaseUrl=${YANDEX_GEOCODER_BASE_URL:-https://geocode-maps.yandex.ru/1.x/}
+      - Yandex__Geocoder__CacheDurationMinutes=${YANDEX_GEOCODER_CACHE_DURATION_MINUTES:-1440}
       - Jwt__Issuer=${JWT_ISSUER:-RefInfoAPI}
       - Jwt__Audience=${JWT_AUDIENCE:-RefInfoAPIClient}
       - Jwt__Key=${JWT_KEY:-REPLACE_THIS_WITH_A_STRONG_SECRET_KEY_32CHARS_MIN}
+    volumes:
+      - sqlite_bd:/app/data
 
 
   bot:
@@ -35,9 +39,8 @@ services:
       - Max__Token=${MAX_TOKEN}
       - Max__TimeoutSeconds=${MAX_TIMEOUT_SECONDS:-30}
 
-      # Связь бота с сервисом API по внутренней сети Docker
       - Data__Source=${DATA_SOURCE:-api}
-      - RefInfoApi__BaseUrl=${REFINFOAPI__BASEURL:-http://api:8010}
+      - RefInfoApi__BaseUrl=${REFINFOAPI__BASEURL:-http://api:8011}
       - RefInfoApi__Username=${REFINFOAPI__USERNAME:-}
       - RefInfoApi__Password=${REFINFOAPI__PASSWORD:-}
 
@@ -45,5 +48,7 @@ services:
       - BotEngine__RateLimit__MaxMessages=${RATE_LIMIT_MAX_MESSAGES:-30}
       - BotEngine__RateLimit__WindowSeconds=${RATE_LIMIT_WINDOW_SECONDS:-60}
     expose:
-      - "8080"
+      - "8089"
 
+volumes:
+  sqlite_bd:

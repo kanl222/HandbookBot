@@ -14,8 +14,8 @@ public sealed class StartCommand : IBotCommand
         await context.Sessions.ClearStateAsync(context.SessionKey, ct);
 
         var keyboard = BotKeyboard.SingleColumn(
-            BotButton.Callback("Список препаратов", "preparations:1"),
             BotButton.Callback("Поиск препарата", "prepsearch:begin"),
+            BotButton.Callback("Список препаратов", "preparations:1"),
             BotButton.Callback("Аптечные пункты", "pharmacies:1"),
             BotButton.Callback("Частые вопросы (FAQ)", "faq:list"),
             BotButton.Callback("Инструкция", "instruction:show"),

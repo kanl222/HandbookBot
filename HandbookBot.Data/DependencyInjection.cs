@@ -28,10 +28,9 @@ public static class DependencyInjection
         // ── API-режим (RefInfoAPI + JWT) ───────────────────────────────────────
         if (source == "api")
         {
-            // Читаем настройки подключения к RefInfoAPI
-            services.Configure<RefInfoApiOptions>(configuration.GetSection(RefInfoApiOptions.Section));
-
             var baseUrl = configuration[$"{RefInfoApiOptions.Section}:BaseUrl"]
+                ?? configuration["REFINFOAPI__BASEURL"]
+                ?? configuration["REFINFOAPI_BASEURL"]
                 ?? configuration["Data:ApiBaseUrl"]   // обратная совместимость
                 ?? throw new InvalidOperationException(
                     $"Конфиг {RefInfoApiOptions.Section}:BaseUrl обязателен при Data:Source=api.");
@@ -42,6 +41,17 @@ public static class DependencyInjection
                 throw new InvalidOperationException(
                     $"Некорректный базовый URL API: '{baseUrl}'. URL должен начинаться с http:// или https:// (например, http://host.docker.internal:5131)");
             }
+
+            // Читаем настройки подключения к RefInfoAPI с fallback
+            services.Configure<RefInfoApiOptions>(opt =>
+            {
+                configuration.GetSection(RefInfoApiOptions.Section).Bind(opt);
+                opt.BaseUrl = baseUrl;
+                if (string.IsNullOrWhiteSpace(opt.Username))
+                    opt.Username = configuration["REFINFOAPI__USERNAME"] ?? configuration["REFINFOAPI_USERNAME"] ?? "";
+                if (string.IsNullOrWhiteSpace(opt.Password))
+                    opt.Password = configuration["REFINFOAPI__PASSWORD"] ?? configuration["REFINFOAPI_PASSWORD"] ?? "";
+            });
 
             // JwtTokenProvider — Singleton, хранит кэш токена
             services.AddSingleton<JwtTokenProvider>();

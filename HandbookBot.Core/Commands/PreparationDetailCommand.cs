@@ -25,7 +25,7 @@ public sealed class PreparationDetailCommand : IBotCommand
         if (string.IsNullOrEmpty(message.CallbackData))
             return;
 
-        var parts = message.CallbackData.Split(':', 2);
+        var parts = message.CallbackData.Split(':');
         if (parts.Length < 2 || !int.TryParse(parts[1], out var prepId))
         {
             await context.ReplyOrEditAsync(
@@ -34,6 +34,9 @@ public sealed class PreparationDetailCommand : IBotCommand
                 BotKeyboard.SingleColumn(BotButton.Callback("Главное меню", "start:menu")));
             return;
         }
+
+        var source = parts.Length > 2 ? parts[2] : null;
+        var sourcePage = parts.Length > 3 && int.TryParse(parts[3], out var p) ? p : 1;
 
         var prep = await _preparationRepo.GetByIdAsync(prepId, ct);
         if (prep is null)
@@ -88,18 +91,38 @@ public sealed class PreparationDetailCommand : IBotCommand
 
         var rows = new List<IReadOnlyList<BotButton>>();
 
-        // Кнопки для каждого аптечного пункта с наличием
+        // Кнопки для каждого аптечного пункта с наличием (передаем контекст возврата к препарату)
+        var sourceToken = source ?? "none";
         var pharmacyIds = prep.AvailablePharmacyIds;
         foreach (var phId in pharmacyIds)
         {
             var ph = await _pharmacyRepo.GetByIdAsync(phId, ct);
             var label = ph is not null ? $"Карта: {ph.Name}" : $"Аптечный пункт №{phId}";
-            rows.Add([BotButton.Callback(label, $"pharmmap:{phId}")]);
+            rows.Add([BotButton.Callback(label, $"pharmmap:{phId}:{prepId}:{sourceToken}:{sourcePage}")]);
         }
 
-        // Навигационные кнопки
+        // Кнопка возврата с сохранением контекста поиска или каталога
+        var sessionState = await context.Sessions.GetStateAsync(context.SessionKey, ct);
+        var isSearchContext = source == "search" || (source == null && !string.IsNullOrWhiteSpace(sessionState?.SearchQuery));
+
+        if (isSearchContext)
+        {
+            rows.Add([BotButton.Callback("Назад к результатам поиска", $"prepsearch:{sourcePage}")]);
+            rows.Add([BotButton.Callback("Новый поиск", "prepsearch:begin")]);
+            rows.Add([BotButton.Callback("Список препаратов", "preparations:1")]);
+        }
+        else if (source == "list")
+        {
+            rows.Add([BotButton.Callback("Назад к списку препаратов", $"preparations:{sourcePage}")]);
+            rows.Add([BotButton.Callback("Поиск препарата", "prepsearch:begin")]);
+        }
+        else
+        {
+            rows.Add([BotButton.Callback("Список препаратов", "preparations:1")]);
+            rows.Add([BotButton.Callback("Поиск препарата", "prepsearch:begin")]);
+        }
+
         rows.Add([BotButton.Callback("Все аптечные пункты", "pharmacies:1")]);
-        rows.Add([BotButton.Callback("Список препаратов", "preparations:1")]);
         rows.Add([BotButton.Callback("Главное меню", "start:menu")]);
 
         var keyboard = new BotKeyboard(rows);

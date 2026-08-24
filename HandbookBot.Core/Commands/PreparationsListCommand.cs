@@ -70,7 +70,7 @@ public sealed class PreparationsListCommand : IBotCommand
         {
             var p = result.Items[i];
             var num = i + 1;
-            prepButtons.Add(BotButton.Callback($"{num}", $"prepinfo:{p.Id}"));
+            prepButtons.Add(BotButton.Callback($"{num}", $"prepinfo:{p.Id}:list:{result.Page}"));
         }
         if (prepButtons.Count > 0)
         {

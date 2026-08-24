@@ -150,7 +150,7 @@ public sealed class PreparationSearchCommand : IBotCommand
         {
             var p = result.Items[i];
             var num = i + 1;
-            prepButtons.Add(BotButton.Callback($"{num}", $"prepinfo:{p.Id}"));
+            prepButtons.Add(BotButton.Callback($"{num}", $"prepinfo:{p.Id}:search:{result.Page}"));
         }
         if (prepButtons.Count > 0)
         {

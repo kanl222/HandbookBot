@@ -35,7 +35,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-EXPOSE 8080
+EXPOSE 8089
 COPY --from=publish /app/publish .
 USER $APP_UID
 ENTRYPOINT ["dotnet", "HandbookBot.dll"]
