@@ -42,6 +42,8 @@ services:
       # Настройки BotEngine
       - BotEngine__RateLimit__MaxMessages=${RATE_LIMIT_MAX_MESSAGES:-30}
       - BotEngine__RateLimit__WindowSeconds=${RATE_LIMIT_WINDOW_SECONDS:-60}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     expose:
       - "8080"
 

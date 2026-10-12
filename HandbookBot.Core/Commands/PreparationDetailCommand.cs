@@ -45,8 +45,6 @@ public sealed class PreparationDetailCommand : IBotCommand
             return;
         }
 
-        var pharmacy = await _pharmacyRepo.GetByIdAsync(prep.PharmacyId, ct);
-
         var sb = new System.Text.StringBuilder();
         sb.AppendLine($"*{EscapeMarkdown(prep.Name)}*\n");
 
@@ -86,12 +84,25 @@ public sealed class PreparationDetailCommand : IBotCommand
 
         var rows = new List<IReadOnlyList<BotButton>>();
 
-        // Кнопки для каждого аптечного пункта с наличием
+        // Кнопки для каждого аптечного пункта с наличием (используем уже загруженные имена из остатков, чтобы избежать N+1 запросов)
         var pharmacyIds = prep.AvailablePharmacyIds;
+        var stocksDict = prep.AvailableStocks
+            .Where(s => !string.IsNullOrWhiteSpace(s.PharmacyName))
+            .GroupBy(s => s.PharmacyId)
+            .ToDictionary(g => g.Key, g => g.First().PharmacyName);
+
         foreach (var phId in pharmacyIds)
         {
-            var ph = await _pharmacyRepo.GetByIdAsync(phId, ct);
-            var label = ph is not null ? $"Карта: {ph.Name}" : $"Аптечный пункт №{phId}";
+            string label;
+            if (stocksDict.TryGetValue(phId, out var phName))
+            {
+                label = $"Карта: {phName}";
+            }
+            else
+            {
+                var ph = await _pharmacyRepo.GetByIdAsync(phId, ct);
+                label = ph is not null ? $"Карта: {ph.Name}" : $"Аптечный пункт №{phId}";
+            }
             rows.Add([BotButton.Callback(label, $"pharmmap:{phId}")]);
         }
 

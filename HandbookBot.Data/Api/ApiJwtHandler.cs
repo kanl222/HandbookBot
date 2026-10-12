@@ -69,7 +69,11 @@ public sealed class JwtTokenProvider
 
             _logger.LogInformation("RefInfoApi: получение нового JWT-токена...");
 
-            using var client = new HttpClient { BaseAddress = new Uri(_options.BaseUrl.TrimEnd('/') + "/") };
+            using var client = new HttpClient
+            {
+                BaseAddress = new Uri(_options.BaseUrl.TrimEnd('/') + "/"),
+                Timeout = TimeSpan.FromSeconds(15)
+            };
             var response = await client.PostAsJsonAsync(
                 "auth/login",
                 new { username = _options.Username, password = _options.Password },
@@ -140,12 +144,33 @@ public sealed class JwtAuthHandler : DelegatingHandler
             var refreshedToken = await _tokenProvider.GetTokenAsync(ct);
             if (!string.IsNullOrEmpty(refreshedToken))
             {
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", refreshedToken);
-                response = await base.SendAsync(request, ct);
+                var retryRequest = CloneRequest(request);
+                retryRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", refreshedToken);
+                response = await base.SendAsync(retryRequest, ct);
             }
         }
 
         return response;
+    }
+
+    private static HttpRequestMessage CloneRequest(HttpRequestMessage request)
+    {
+        var clone = new HttpRequestMessage(request.Method, request.RequestUri)
+        {
+            Version = request.Version
+        };
+
+        foreach (var header in request.Headers)
+        {
+            clone.Headers.TryAddWithoutValidation(header.Key, header.Value);
+        }
+
+        if (request.Content != null)
+        {
+            clone.Content = request.Content;
+        }
+
+        return clone;
     }
 }
 
