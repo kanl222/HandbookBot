@@ -22,6 +22,8 @@ services:
       timeout: 6s
       start_period: 30s
       retries: 6
+    volumes:
+      - api-geo-data:/app/data
 
   bot:
     build:
@@ -56,3 +58,6 @@ services:
       - "host.docker.internal:host-gateway"
     expose:
       - "8080"
+
+volumes:
+  api-geo-data:

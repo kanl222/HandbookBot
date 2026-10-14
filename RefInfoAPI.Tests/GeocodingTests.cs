@@ -2,6 +2,8 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -16,6 +18,46 @@ namespace RefInfoAPI.Tests;
 
 public class GeocodingTests
 {
+    [Fact]
+    public async Task SqliteCache_PreservesCoordinatesAcrossServiceInstances_AndTracksStoreId()
+    {
+        using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+        var services = new ServiceCollection();
+        services.AddDbContext<GeoCacheDbContext>(options => options.UseSqlite(connection));
+        using var provider = services.BuildServiceProvider();
+        using (var scope = provider.CreateScope())
+            await scope.ServiceProvider.GetRequiredService<GeoCacheDbContext>().Database.EnsureCreatedAsync();
+        var calls = 0;
+        using var handler = new StubHandler((_, _) =>
+        {
+            calls++;
+            return Task.FromResult(Response("37.7 55.5"));
+        });
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Yandex:Geocoder:ApiKey"] = "test-key",
+            ["Yandex:Geocoder:BaseUrl"] = "https://geocoder.unit.test/"
+        }).Build();
+        using var firstCache = new MemoryCache(new MemoryCacheOptions());
+        using var secondCache = new MemoryCache(new MemoryCacheOptions());
+        var scopes = provider.GetRequiredService<IServiceScopeFactory>();
+        var first = new YandexGeocodingService(new StubClientFactory(handler), firstCache, configuration,
+            NullLogger<YandexGeocodingService>.Instance, scopes);
+        var second = new YandexGeocodingService(new StubClientFactory(handler), secondCache, configuration,
+            NullLogger<YandexGeocodingService>.Instance, scopes);
+        Assert.NotNull(await first.GetCoordinatesAsync("Test Street", drugstoreId: 7));
+        Assert.NotNull(await second.GetCoordinatesAsync("test street", drugstoreId: 7));
+        Assert.Equal(1, calls);
+        using var verification = provider.CreateScope();
+        var entry = await verification.ServiceProvider.GetRequiredService<GeoCacheDbContext>().GeoCacheEntries.SingleAsync();
+        Assert.Equal(7, entry.DrugstoreId);
+        Assert.True(entry.IsFound);
+        // Изменение адреса той же аптеки требует нового результата, а не старых координат по ID.
+        Assert.NotNull(await second.GetCoordinatesAsync("New Street", drugstoreId: 7));
+        Assert.Equal(2, calls);
+    }
+
     [Fact]
     public async Task Geocoder_ParsesLongitudeLatitude_AndCachesNormalizedAddresses()
     {
@@ -159,7 +201,7 @@ public class GeocodingTests
             new Drugstore { Id = 2, Name = "Two", Address = "Address 2" });
         await db.SaveChangesAsync();
         var geocoder = Substitute.For<IGeocodingService>();
-        geocoder.GetCoordinatesAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+        geocoder.GetCoordinatesAsync(Arg.Any<string>(), Arg.Any<CancellationToken>(), Arg.Any<int?>())
             .Returns((PharmacyCoordinates?)new PharmacyCoordinates(55.5, 37.7));
         var repository = new EfDrugStoreRepository(db, geocoder);
 
