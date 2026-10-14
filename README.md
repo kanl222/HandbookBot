@@ -207,7 +207,23 @@ dotnet run --project HandbookBot
 
 После запуска:
 - Бот принимает сообщения через Long Polling
-- Healthcheck доступен на `http://localhost:PORT/health`
+- Healthcheck бота доступен на `http://localhost:5080/health` при запуске с профилем `HandbookBot`.
+
+Порты и адрес API зависят от способа запуска:
+
+| Запуск | Адрес API для бота | Порт бота |
+| --- | --- | --- |
+| Оба локально | `http://localhost:5131` | `5080` |
+| Оба в Docker Compose | `http://api:8080` | `8080` внутри контейнера |
+| Бот в Docker, API на Windows | `http://host.docker.internal:5131` | `8080` внутри контейнера |
+
+Compose публикует API на порту `5131` хоста. Одновременный локальный API на том же порту вызовет конфликт. Порт бота в Compose не опубликован на хост; одинаковый внутренний порт `8080` у разных контейнеров допустим.
+
+Для локального API используйте `dotnet run --project external/ref-info-api/RefInfoAPI.Host --launch-profile http`, для бота — команду выше. При доступе к локальному API из Docker API должен слушать сетевой интерфейс: `dotnet run --project external/ref-info-api/RefInfoAPI.Host --no-launch-profile --urls http://0.0.0.0:5131`.
+
+Задайте `RefInfoApi__BaseUrl` под выбранный способ запуска. Проверьте `REFINFOAPI__BASEURL` в корневом `.env`: Compose подставляет его вместо адреса по умолчанию `http://api:8080`. При запуске бота файл `.env` загружается из рабочего каталога, а уже заданные переменные окружения имеют приоритет.
+
+Compose ожидает успешного `/health` API (включая подключение к БД) перед запуском бота. Проверка готовности при старте не устраняет последующие сетевые сбои. Для проверки используйте `docker compose ps` и `docker compose logs --tail 100 api bot`; локально — `curl http://localhost:5131/health`. Перед передачей логов удалите секреты.
 
 ---
 
@@ -319,6 +335,14 @@ GET http://localhost:8080/health
 | Логирование | Microsoft.Extensions.Logging |
 
 ---
+
+## Обновление RefInfoAPI
+
+Сервер API собирается из подмодуля `external/ref-info-api` и связывает ботов с БД организации.
+Для входа используются существующие учётки организации: `REFINFOAPI__USERNAME` и
+`REFINFOAPI__PASSWORD`. Отдельный импорт паролей не нужен. Настройте `JWT_KEY` и
+подключение к БД; подробности находятся в [README API](external/ref-info-api/README.md).
+Для координат аптек можно задать `YANDEX_GEOCODER_API_KEY`; без ключа бот показывает адрес.
 
 ## Лицензия
 

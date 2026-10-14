@@ -25,6 +25,6 @@ public sealed class StartCommand : IBotCommand
         await context.ReplyAsync(
             "Добро пожаловать в справочник льготных препаратов ГАУЗ ОАС!\n\n" +
             "Выберите раздел:",
-            keyboard);
+            keyboard, ct: ct);
     }
 }

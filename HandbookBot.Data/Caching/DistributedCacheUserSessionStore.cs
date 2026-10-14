@@ -1,6 +1,6 @@
 using System.Text.Json;
-using HandbookBot.Core.Interfaces;
-using HandbookBot.Core.Models;
+using BotEngine.Core.Interfaces;
+using BotEngine.Core.Models;
 using Microsoft.Extensions.Caching.Distributed;
 
 namespace HandbookBot.Data.Caching;

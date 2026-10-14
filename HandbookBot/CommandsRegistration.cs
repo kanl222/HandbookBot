@@ -1,5 +1,5 @@
+using BotEngine.Core.Interfaces;
 using HandbookBot.Core.Commands;
-using HandbookBot.Core.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace HandbookBot;

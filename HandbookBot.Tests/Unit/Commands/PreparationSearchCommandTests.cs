@@ -36,8 +36,8 @@ public class PreparationSearchCommandTests
 
         // Assert
         await _sessions.Received(1).SetStateAsync(
-            "test:user", 
-            Arg.Is<UserDialogState>(s => s != null && s.AwaitingInputFor == "prepsearch"),
+            _context.SessionKey,
+            Arg.Is<UserDialogState>(s => s.AwaitingInputFor == "prepsearch"),
             Arg.Any<TimeSpan?>(),
             Arg.Any<CancellationToken>());
 
@@ -84,11 +84,8 @@ public class PreparationSearchCommandTests
         var sent = Assert.Single(_platform.SentMessages);
         Assert.Contains("Результаты поиска «Aspirin»", sent.Text);
         Assert.Contains("1. *Aspirin C*", sent.Text);
-        Assert.Contains("Аптека: Аптека №1", sent.Text);
-        Assert.Contains("Адрес: ул. Ленина, 1", sent.Text);
+        Assert.Contains("В наличии", sent.Text);
         Assert.Contains("2. *Aspirin Cardio*", sent.Text);
-        Assert.Contains("Аптека: Аптека №2", sent.Text);
-        Assert.Contains("Адрес: пр. Маркса, 34", sent.Text);
 
         Assert.NotNull(sent.Keyboard);
         var prepRow = sent.Keyboard.Rows[0];
@@ -104,7 +101,7 @@ public class PreparationSearchCommandTests
     {
         // Arrange
         var msg = new IncomingMessage("chat", "user", "", "prepsearch:2", "Test");
-        _sessions.GetStateAsync("test:user", Arg.Any<CancellationToken>())
+        _sessions.GetStateAsync(_context.SessionKey, Arg.Any<CancellationToken>())
             .Returns(new UserDialogState("prepsearch") { SearchQuery = "Aspirin" });
 
         var items = new[] { TestData.CreatePreparation(1, "Aspirin C", 100m, 1) };
@@ -120,7 +117,7 @@ public class PreparationSearchCommandTests
         var sent = Assert.Single(_platform.SentMessages);
         Assert.Contains("Результаты поиска «Aspirin»", sent.Text);
         Assert.Contains("стр. 2/2", sent.Text);
-        Assert.Contains("Аптека: Аптека №1", sent.Text);
+        Assert.Contains("В наличии", sent.Text);
     }
 
     [Fact]
@@ -128,7 +125,7 @@ public class PreparationSearchCommandTests
     {
         // Arrange
         var msg = new IncomingMessage("chat", "user", "", "prepsearch:2", "Test");
-        _sessions.GetStateAsync("test:user", Arg.Any<CancellationToken>())
+        _sessions.GetStateAsync(_context.SessionKey, Arg.Any<CancellationToken>())
             .Returns((UserDialogState?)null); // Expired session
 
         // Act

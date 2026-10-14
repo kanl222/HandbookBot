@@ -27,6 +27,6 @@ public sealed class ContactsCommand : IBotCommand
             "Сайт: https://gosapteka.orb.ru/";
 
         return context.ReplyAsync(text,
-            BotKeyboard.SingleColumn(BotButton.Callback("Главное меню", "start:menu")));
+            BotKeyboard.SingleColumn(BotButton.Callback("Главное меню", "start:menu")), ct: ct);
     }
 }

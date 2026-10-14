@@ -43,7 +43,7 @@ public sealed class PreparationSearchCommand : IBotCommand
 
                 await context.ReplyAsync(
                     "Введите название препарата или его часть для поиска:",
-                    BotKeyboard.SingleColumn(BotButton.Callback("Отмена", "start:menu")));
+                    BotKeyboard.SingleColumn(BotButton.Callback("Отмена", "start:menu")), ct: ct);
                 return;
             }
 
@@ -60,7 +60,7 @@ public sealed class PreparationSearchCommand : IBotCommand
                         "Время сессии поиска истекло. Пожалуйста, введите запрос заново:",
                         BotKeyboard.SingleColumn(
                             BotButton.Callback("Новый поиск", "prepsearch:begin"),
-                            BotButton.Callback("Главное меню", "start:menu")));
+                            BotButton.Callback("Главное меню", "start:menu")), ct: ct);
                     return;
                 }
 
@@ -81,7 +81,7 @@ public sealed class PreparationSearchCommand : IBotCommand
             // Сессию не сбрасываем — пользователь остаётся в режиме ожидания ввода
             await context.ReplyAsync(
                 "Поисковый запрос не может быть пустым. Введите название препарата:",
-                BotKeyboard.SingleColumn(BotButton.Callback("Главное меню", "start:menu")));
+                BotKeyboard.SingleColumn(BotButton.Callback("Главное меню", "start:menu")), ct: ct);
             return;
         }
 
@@ -106,7 +106,7 @@ public sealed class PreparationSearchCommand : IBotCommand
                 $"По запросу «{escapedQuery}» ничего не найдено.",
                 BotKeyboard.SingleColumn(
                     BotButton.Callback("Новый поиск", "prepsearch:begin"),
-                    BotButton.Callback("Главное меню", "start:menu")));
+                    BotButton.Callback("Главное меню", "start:menu")), ct: ct);
             return;
         }
 
@@ -159,7 +159,7 @@ public sealed class PreparationSearchCommand : IBotCommand
         rows.Add(new[] { BotButton.Callback("Новый поиск", "prepsearch:begin") });
         rows.Add(new[] { BotButton.Callback("Главное меню", "start:menu") });
 
-        await context.ReplyAsync(sb.ToString(), new BotKeyboard(rows));
+        await context.ReplyAsync(sb.ToString(), new BotKeyboard(rows), ct: ct);
     }
 
     private static string EscapeMarkdown(string text)

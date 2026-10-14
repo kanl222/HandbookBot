@@ -69,12 +69,14 @@ public sealed class ApiPreparationRepository : IPreparationRepository
         var url = $"api/drugs/{id}";
         try
         {
-            var response = await _http.GetAsync(url, ct);
-            if (!response.IsSuccessStatusCode)
+            using var response = await _http.GetAsync(url, ct);
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
                 _logger.LogWarning("API вернул статус {StatusCode} на запрос {BaseAddress}{Url}", response.StatusCode, _http.BaseAddress, url);
                 return null;
             }
+
+            response.EnsureSuccessStatusCode();
 
             var item = await response.Content.ReadFromJsonAsync<ApiPreparation>(ct);
             return item?.ToDomain();

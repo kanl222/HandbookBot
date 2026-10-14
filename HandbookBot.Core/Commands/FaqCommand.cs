@@ -34,7 +34,7 @@ public sealed class FaqCommand : IBotCommand
                     $"*{entry.Question}*\n\n{entry.Answer}",
                     BotKeyboard.SingleColumn(
                         BotButton.Callback("Назад к вопросам", "faq:list"),
-                        BotButton.Callback("В главное меню", "start:menu")));
+                        BotButton.Callback("В главное меню", "start:menu")), ct: ct);
                 return;
             }
         }
@@ -47,6 +47,6 @@ public sealed class FaqCommand : IBotCommand
 
         await context.ReplyAsync(
             "*Часто задаваемые вопросы (FAQ)*\n\nВыберите интересующий вас вопрос:",
-            BotKeyboard.SingleColumn(buttons));
+            BotKeyboard.SingleColumn(buttons), ct: ct);
     }
 }

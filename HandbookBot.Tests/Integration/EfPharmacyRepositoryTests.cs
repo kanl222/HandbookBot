@@ -1,4 +1,5 @@
 using HandbookBot.Data.EfCore;
+using HandbookBot.Core.Interfaces;
 using HandbookBot.Tests.Helpers;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,6 +20,21 @@ public class EfPharmacyRepositoryTests : IDisposable
         _db.Database.EnsureCreated();
 
         _sut = new EfPharmacyRepository(_db);
+    }
+
+    [Fact]
+    public async Task GetByIdsAsync_UsesTheSharedContextAndOmitsMissingIds()
+    {
+        _db.Pharmacies.AddRange(
+            TestData.CreatePharmacyEntity(1, "A Pharmacy", "Address"),
+            TestData.CreatePharmacyEntity(2, "B Pharmacy", "Address"));
+        await _db.SaveChangesAsync();
+
+        var result = await ((IPharmacyRepository)_sut).GetByIdsAsync(new[] { 2, 1, 2, 99 });
+
+        Assert.Equal(2, result.Count);
+        Assert.Equal("B Pharmacy", result[2].Name);
+        Assert.False(result.ContainsKey(99));
     }
 
     public void Dispose()

@@ -2,6 +2,7 @@
   "profiles": {
     "HandbookBot": {
       "commandName": "Project",
+      "applicationUrl": "http://localhost:5080",
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Development"
       },

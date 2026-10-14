@@ -30,7 +30,7 @@ public sealed class PreparationDetailCommand : IBotCommand
         {
             await context.ReplyAsync(
                 "Некорректный идентификатор препарата.",
-                BotKeyboard.SingleColumn(BotButton.Callback("Главное меню", "start:menu")));
+                BotKeyboard.SingleColumn(BotButton.Callback("Главное меню", "start:menu")), ct: ct);
             return;
         }
 
@@ -41,11 +41,9 @@ public sealed class PreparationDetailCommand : IBotCommand
                 "Препарат не найден.",
                 BotKeyboard.SingleColumn(
                     BotButton.Callback("Список препаратов", "preparations:1"),
-                    BotButton.Callback("Главное меню", "start:menu")));
+                    BotButton.Callback("Главное меню", "start:menu")), ct: ct);
             return;
         }
-
-        var pharmacy = await _pharmacyRepo.GetByIdAsync(prep.PharmacyId, ct);
 
         var sb = new System.Text.StringBuilder();
         sb.AppendLine($"*{EscapeMarkdown(prep.Name)}*\n");
@@ -57,9 +55,11 @@ public sealed class PreparationDetailCommand : IBotCommand
         if (!string.IsNullOrWhiteSpace(dosage))
             sb.AppendLine($"• Форма / дозировка: {EscapeMarkdown(dosage)}");
 
-        if (prep.IsAvailable && prep.TotalPacks > 0)
+        if (prep.IsAvailable)
         {
-            sb.AppendLine($"• Статус: В наличии (всего {prep.TotalPacks:0.##} уп.)");
+            sb.AppendLine(prep.TotalPacks > 0
+                ? $"• Статус: В наличии (всего {prep.TotalPacks:0.##} уп.)"
+                : "• Статус: В наличии");
 
             var seriaStr = !string.IsNullOrWhiteSpace(prep.Series) ? $"Серия: {prep.Series}" : string.Empty;
             var expStr = prep.ExpirationDate.HasValue ? $" (годен до {prep.ExpirationDate.Value:dd.MM.yyyy})" : string.Empty;
@@ -86,12 +86,31 @@ public sealed class PreparationDetailCommand : IBotCommand
 
         var rows = new List<IReadOnlyList<BotButton>>();
 
-        // Кнопки для каждого аптечного пункта с наличием
+        // Кнопки для каждого аптечного пункта с наличием (используем уже загруженные имена из остатков, чтобы избежать N+1 запросов)
         var pharmacyIds = prep.AvailablePharmacyIds;
+        var stocksDict = prep.AvailableStocks
+            .Where(s => !string.IsNullOrWhiteSpace(s.PharmacyName))
+            .GroupBy(s => s.PharmacyId)
+            .ToDictionary(g => g.Key, g => g.First().PharmacyName);
+
+        var missingIds = pharmacyIds.Where(id => !stocksDict.ContainsKey(id)).Distinct().ToArray();
+        var pharmacies = missingIds.Length == 0
+            ? new Dictionary<int, Pharmacy>()
+            : await _pharmacyRepo.GetByIdsAsync(missingIds, ct);
+
         foreach (var phId in pharmacyIds)
         {
-            var ph = await _pharmacyRepo.GetByIdAsync(phId, ct);
-            var label = ph is not null ? $"Карта: {ph.Name}" : $"Аптечный пункт №{phId}";
+            string label;
+            if (stocksDict.TryGetValue(phId, out var phName))
+            {
+                label = $"Карта: {phName}";
+            }
+            else
+            {
+                label = pharmacies.TryGetValue(phId, out var ph)
+                    ? $"Карта: {ph.Name}"
+                    : $"Аптечный пункт №{phId}";
+            }
             rows.Add([BotButton.Callback(label, $"pharmmap:{phId}")]);
         }
 
@@ -101,7 +120,7 @@ public sealed class PreparationDetailCommand : IBotCommand
         rows.Add([BotButton.Callback("Главное меню", "start:menu")]);
 
         var keyboard = new BotKeyboard(rows);
-        await context.ReplyAsync(sb.ToString(), keyboard);
+        await context.ReplyAsync(sb.ToString(), keyboard, ct: ct);
     }
 
     private static string EscapeMarkdown(string text)

@@ -12,8 +12,9 @@
   <ItemGroup>
     <ProjectReference Include="..\HandbookBot.Core\HandbookBot.Core.csproj" />
     <ProjectReference Include="..\HandbookBot.Data\HandbookBot.Data.csproj" />
-    <ProjectReference Include="..\HandbookBot.Telegram\HandbookBot.Telegram.csproj" />
-    <ProjectReference Include="..\HandbookBot.Max\HandbookBot.Max.csproj" />
+    <ProjectReference Include="..\external\BotEngine\BotEngine.Core\BotEngine.Core.csproj" />
+    <ProjectReference Include="..\external\BotEngine\BotEngine.Telegram\BotEngine.Telegram.csproj" />
+    <ProjectReference Include="..\external\BotEngine\BotEngine.Max\BotEngine.Max.csproj" />
   </ItemGroup>
 
   <ItemGroup>

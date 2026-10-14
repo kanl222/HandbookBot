@@ -104,4 +104,57 @@ public sealed class CachedPharmacyRepository : IPharmacyRepository
 
         return item;
     }
+
+    public async Task<IReadOnlyDictionary<int, Pharmacy>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken ct = default)
+    {
+        var result = new Dictionary<int, Pharmacy>();
+        var missing = new List<int>();
+        foreach (var id in ids.Distinct())
+        {
+            ct.ThrowIfCancellationRequested();
+            var cachedData = await _cache.GetStringAsync($"Pharmacy_{id}", ct);
+            Pharmacy? cachedItem = null;
+            if (!string.IsNullOrEmpty(cachedData))
+            {
+                try
+                {
+                    cachedItem = JsonSerializer.Deserialize<Pharmacy>(cachedData, _jsonOptions);
+                }
+                catch (JsonException)
+                {
+                    // Повреждённую запись заменит результат запроса к репозиторию.
+                }
+            }
+
+            if (cachedItem is not null)
+                result[id] = cachedItem;
+            else
+                missing.Add(id);
+        }
+
+        if (missing.Count == 0)
+            return result;
+
+        var loaded = await _inner.GetByIdsAsync(missing, ct);
+        foreach (var (id, pharmacy) in loaded)
+        {
+            ct.ThrowIfCancellationRequested();
+            result[id] = pharmacy;
+            try
+            {
+                await _cache.SetStringAsync($"Pharmacy_{id}",
+                    JsonSerializer.Serialize(pharmacy, _jsonOptions),
+                    new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = _cacheDuration }, ct);
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch
+            {
+                // Ошибка кэша не должна мешать возвращать уже полученные данные.
+            }
+        }
+        return result;
+    }
 }

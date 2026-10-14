@@ -25,7 +25,7 @@ public sealed class PharmacyMapCommand : IBotCommand
         {
             await context.ReplyAsync(
                 "Некорректный идентификатор аптеки.",
-                BotKeyboard.SingleColumn(BotButton.Callback("Главное меню", "start:menu")));
+                BotKeyboard.SingleColumn(BotButton.Callback("Главное меню", "start:menu")), ct: ct);
             return;
         }
 
@@ -37,14 +37,20 @@ public sealed class PharmacyMapCommand : IBotCommand
                 "Аптека не найдена.",
                 BotKeyboard.SingleColumn(
                     BotButton.Callback("Аптечные пункты", "pharmacies:1"),
-                    BotButton.Callback("Главное меню", "start:menu")));
+                    BotButton.Callback("Главное меню", "start:menu")), ct: ct);
             return;
         }
-        await context.SendLocationAsync(pharmacy.Latitude, pharmacy.Longitude);
+        var hasCoordinates = double.IsFinite(pharmacy.Latitude) && double.IsFinite(pharmacy.Longitude)
+            && pharmacy.Latitude is >= -90 and <= 90
+            && pharmacy.Longitude is >= -180 and <= 180
+            && (pharmacy.Latitude != 0 || pharmacy.Longitude != 0);
+        if (hasCoordinates)
+            await context.SendLocationAsync(pharmacy.Latitude, pharmacy.Longitude, ct: ct);
         await context.ReplyAsync(
-            $"*{pharmacy.Name}*\n{pharmacy.Address}\nТел: {pharmacy.Contact}",
+            $"*{pharmacy.Name}*\n{pharmacy.Address}\nТел: {pharmacy.Contact}"
+                + (hasCoordinates ? string.Empty : "\nКоординаты аптеки пока недоступны. Используйте адрес для поиска на карте."),
             BotKeyboard.SingleColumn(
                 BotButton.Callback("Аптечные пункты", "pharmacies:1"),
-                BotButton.Callback("Главное меню", "start:menu")));
+                BotButton.Callback("Главное меню", "start:menu")), ct: ct);
     }
 }
