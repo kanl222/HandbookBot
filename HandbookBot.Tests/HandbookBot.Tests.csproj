@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <Using Include="Xunit" />
+    <Compile Include="..\HandbookBot\CommandsRegistration.cs" Link="Helpers\CommandsRegistration.cs" />
   </ItemGroup>
 
   <ItemGroup>

@@ -51,6 +51,25 @@ public class PharmacyMapCommandTests
         Assert.Contains("Аптека не найдена", sent.Text);
     }
 
+    [Theory]
+    [InlineData(0.0, 0.0)]
+    [InlineData(91.0, 37.0)]
+    [InlineData(55.0, 181.0)]
+    [InlineData(double.NaN, 37.0)]
+    public async Task ExecuteAsync_MissingOrInvalidCoordinates_ShowsAddressWithoutSendingLocation(double latitude, double longitude)
+    {
+        _repo.GetByIdAsync(1, Arg.Any<CancellationToken>())
+            .Returns(TestData.CreatePharmacy(1, "Pharmacy", "Address", latitude, longitude));
+
+        await _sut.ExecuteAsync(_context, new IncomingMessage("chat", "user", "", "pharmmap:1", "Test"));
+
+        Assert.Empty(_platform.SentLocations);
+        var response = Assert.Single(_platform.SentMessages);
+        Assert.Contains("Address", response.Text);
+        Assert.Contains("Координаты аптеки пока недоступны", response.Text);
+        Assert.Contains(response.Keyboard!.Rows.SelectMany(row => row), button => button.Payload == "start:menu");
+    }
+
     [Fact]
     public async Task ExecuteAsync_Found_SendsLocation()
     {

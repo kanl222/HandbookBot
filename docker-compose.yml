@@ -8,12 +8,20 @@ services:
       - "5131:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__DefaultConnection=${DB_CONNECTION_STRING}
       - Jwt__Issuer=${JWT_ISSUER:-RefInfoAPI}
       - Jwt__Audience=${JWT_AUDIENCE:-RefInfoAPIClient}
-      - Jwt__Key=${JWT_KEY:-REPLACE_THIS_WITH_A_STRONG_SECRET_KEY_32CHARS_MIN}
+      - Jwt__Key=${JWT_KEY:?Set JWT_KEY to a strong signing key}
+      - Yandex__Geocoder__ApiKey=${YANDEX_GEOCODER_API_KEY:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--show-error", "--max-time", "5", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 6s
+      start_period: 30s
+      retries: 6
 
   bot:
     build:
@@ -21,9 +29,11 @@ services:
       dockerfile: Dockerfile
     restart: always
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
 
       - Telegram__Enabled=${TELEGRAM_ENABLED:-false}
       - Telegram__Token=${TELEGRAM_TOKEN}
@@ -46,4 +56,3 @@ services:
       - "host.docker.internal:host-gateway"
     expose:
       - "8080"
-

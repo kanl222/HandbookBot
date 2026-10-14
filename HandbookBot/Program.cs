@@ -3,12 +3,13 @@ using BotEngine.Core.Interfaces;
 using BotEngine.Max;
 using BotEngine.Telegram;
 using HandbookBot;
+using HandbookBot.Core;
 using HandbookBot.Data;
 using HandbookBot.Data.Caching;
 
 // Загружаем переменные из .env файла в переменные окружения процесса.
 // Это нужно сделать до создания builder.
-DotNetEnv.Env.Load();
+DotNetEnv.Env.NoClobber().Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,7 +24,7 @@ builder.Services.AddHandbookData(builder.Configuration);
 
 // -------------------- 2. Ядро и Сервисы BotEngine --------------------
 builder.Services.AddBotEngine();
-builder.Services.AddRateLimiting();
+builder.Services.AddHandbookMessagePipeline();
 
 // Хранилище сессий через распределенный кэш (IDistributedCache)
 builder.Services.AddDistributedMemoryCache();

@@ -36,7 +36,7 @@ public class PreparationSearchCommandTests
 
         // Assert
         await _sessions.Received(1).SetStateAsync(
-            "test:user", 
+            _context.SessionKey,
             Arg.Is<UserDialogState>(s => s.AwaitingInputFor == "prepsearch"),
             Arg.Any<TimeSpan?>(),
             Arg.Any<CancellationToken>());
@@ -101,7 +101,7 @@ public class PreparationSearchCommandTests
     {
         // Arrange
         var msg = new IncomingMessage("chat", "user", "", "prepsearch:2", "Test");
-        _sessions.GetStateAsync("test:user", Arg.Any<CancellationToken>())
+        _sessions.GetStateAsync(_context.SessionKey, Arg.Any<CancellationToken>())
             .Returns(new UserDialogState("prepsearch") { SearchQuery = "Aspirin" });
 
         var items = new[] { TestData.CreatePreparation(1, "Aspirin C", 100m, 1) };
@@ -125,7 +125,7 @@ public class PreparationSearchCommandTests
     {
         // Arrange
         var msg = new IncomingMessage("chat", "user", "", "prepsearch:2", "Test");
-        _sessions.GetStateAsync("test:user", Arg.Any<CancellationToken>())
+        _sessions.GetStateAsync(_context.SessionKey, Arg.Any<CancellationToken>())
             .Returns((UserDialogState?)null); // Expired session
 
         // Act

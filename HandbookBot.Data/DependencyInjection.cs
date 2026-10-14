@@ -44,7 +44,9 @@ public static class DependencyInjection
             }
 
             // JwtTokenProvider — Singleton, хранит кэш токена
+            services.PostConfigure<RefInfoApiOptions>(options => options.BaseUrl = baseUrl);
             services.AddSingleton<JwtTokenProvider>();
+            services.AddHttpClient(JwtTokenProvider.HttpClientName);
             // JwtAuthHandler — Transient для IHttpClientFactory
             services.AddTransient<JwtAuthHandler>();
 

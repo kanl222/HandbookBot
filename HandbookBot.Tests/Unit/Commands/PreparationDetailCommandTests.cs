@@ -50,15 +50,65 @@ public class PreparationDetailCommandTests
 
         // Assert: _pharmacyRepo не должен вызываться для получения названий аптек
         await _pharmacyRepo.DidNotReceive().GetByIdAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
+        await _pharmacyRepo.DidNotReceive().GetByIdsAsync(Arg.Any<IEnumerable<int>>(), Arg.Any<CancellationToken>());
 
         var sent = Assert.Single(_platform.SentMessages);
         Assert.Contains("Парацетамол", sent.Text);
+        Assert.Contains("• Статус: В наличии (всего 7 уп.)", sent.Text);
         Assert.NotNull(sent.Keyboard);
 
         // Кнопки для аптек должны содержать названия из stocks
         var buttons = sent.Keyboard.Rows.SelectMany(r => r).ToList();
         Assert.Contains(buttons, b => b.Text == "Карта: Аптека №10" && b.Payload == "pharmmap:10");
         Assert.Contains(buttons, b => b.Text == "Карта: Аптека №20" && b.Payload == "pharmmap:20");
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_AvailableWithoutPackCount_DoesNotInventZeroQuantity()
+    {
+        _prepRepo.GetByIdAsync(10, Arg.Any<CancellationToken>())
+            .Returns(new Preparation(10, "Drug", 30m, 0, true));
+
+        await _sut.ExecuteAsync(_context, new IncomingMessage("chat", "user", "", "prepinfo:10", "Test"));
+
+        var sent = Assert.Single(_platform.SentMessages);
+        Assert.Contains("• Статус: В наличии", sent.Text);
+        Assert.DoesNotContain("Нет в наличии", sent.Text);
+        Assert.DoesNotContain("всего", sent.Text);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_UnavailableWithStalePackCount_DoesNotClaimAvailability()
+    {
+        _prepRepo.GetByIdAsync(11, Arg.Any<CancellationToken>())
+            .Returns(new Preparation(11, "Drug", 30m, 0, false, TotalPacks: 7m));
+
+        await _sut.ExecuteAsync(_context, new IncomingMessage("chat", "user", "", "prepinfo:11", "Test"));
+
+        var sent = Assert.Single(_platform.SentMessages);
+        Assert.Contains("• Статус: Нет в наличии", sent.Text);
+        Assert.DoesNotContain("• Статус: В наличии", sent.Text);
+        Assert.DoesNotContain("всего", sent.Text);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_BatchFallback_PreservesOrderAndMissingPharmacyLabels()
+    {
+        var prep = new Preparation(3, "Drug", 30m, 30, true,
+            PharmacyIds: new[] { 30, 10, 99 });
+        _prepRepo.GetByIdAsync(3, Arg.Any<CancellationToken>()).Returns(prep);
+        _pharmacyRepo.GetByIdsAsync(Arg.Any<IEnumerable<int>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<int, Pharmacy>
+            {
+                [10] = new Pharmacy(10, "Ten", "Address", 0, 0, ""),
+                [30] = new Pharmacy(30, "Thirty", "Address", 0, 0, "")
+            });
+
+        await _sut.ExecuteAsync(_context, new IncomingMessage("chat", "user", "", "prepinfo:3", "Test"));
+
+        var buttons = Assert.Single(_platform.SentMessages).Keyboard!.Rows.Take(3).SelectMany(row => row).ToArray();
+        Assert.Equal(new[] { "Карта: Thirty", "Карта: Ten", "Аптечный пункт №99" }, buttons.Select(button => button.Text));
+        Assert.Equal(new[] { "pharmmap:30", "pharmmap:10", "pharmmap:99" }, buttons.Select(button => button.Payload));
     }
 
     [Fact]
@@ -74,8 +124,11 @@ public class PreparationDetailCommandTests
             PharmacyIds: new[] { 30 });
 
         _prepRepo.GetByIdAsync(2, Arg.Any<CancellationToken>()).Returns(prep);
-        _pharmacyRepo.GetByIdAsync(30, Arg.Any<CancellationToken>())
-            .Returns(new Pharmacy(30, "Центральная Аптека", "ул. Советская, 10", 55.0, 37.0, "+79990000000"));
+        _pharmacyRepo.GetByIdsAsync(Arg.Is<IEnumerable<int>>(ids => ids != null && ids.SequenceEqual(new[] { 30 })), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<int, Pharmacy>
+            {
+                [30] = new Pharmacy(30, "Центральная Аптека", "ул. Советская, 10", 55.0, 37.0, "+79990000000")
+            });
 
         var msg = new IncomingMessage("chat", "user", "", "prepinfo:2", "Test");
 
@@ -83,7 +136,8 @@ public class PreparationDetailCommandTests
         await _sut.ExecuteAsync(_context, msg);
 
         // Assert: был fallback к репозиторию
-        await _pharmacyRepo.Received(1).GetByIdAsync(30, Arg.Any<CancellationToken>());
+        await _pharmacyRepo.Received(1).GetByIdsAsync(
+            Arg.Is<IEnumerable<int>>(ids => ids != null && ids.SequenceEqual(new[] { 30 })), Arg.Any<CancellationToken>());
 
         var sent = Assert.Single(_platform.SentMessages);
         var buttons = sent.Keyboard?.Rows.SelectMany(r => r).ToList() ?? [];

@@ -20,7 +20,9 @@ public class CommandDispatcherTests
         _sessions = Substitute.For<IUserSessionStore>();
         _platform = new FakeMessagingPlatform();
         
-        _sut = new CommandDispatcher(_factory, _sessions, Enumerable.Empty<IBotMiddleware>(), NullLogger<CommandDispatcher>.Instance);
+        var sessionKeys = Substitute.For<ISessionKeyProvider>();
+        sessionKeys.Create(Arg.Any<IncomingMessage>()).Returns("test:user");
+        _sut = new CommandDispatcher(_factory, _sessions, sessionKeys, Enumerable.Empty<IBotMiddleware>(), NullLogger<CommandDispatcher>.Instance);
     }
 
     [Fact]

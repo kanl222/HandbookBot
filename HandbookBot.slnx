@@ -2,6 +2,7 @@
   <Project Path="HandbookBot.Core/HandbookBot.Core.csproj" Id="1f24d3d4-4813-44dd-9472-69443f07a6a7" />
   <Project Path="HandbookBot.Data/HandbookBot.Data.csproj" Id="00a24515-ad5d-4c09-805b-16a1b318e1f8" />
   <Project Path="HandbookBot.Tests/HandbookBot.Tests.csproj" />
+  <Project Path="RefInfoAPI.Tests/RefInfoAPI.Tests.csproj" />
   <Project Path="HandbookBot/HandbookBot.csproj" />
   <Project Path="external/BotEngine/BotEngine.Core/BotEngine.Core.csproj" />
   <Project Path="external/BotEngine/BotEngine.Telegram/BotEngine.Telegram.csproj" />

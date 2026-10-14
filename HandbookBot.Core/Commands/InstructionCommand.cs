@@ -27,6 +27,6 @@ public sealed class InstructionCommand : IBotCommand
             "4. Для просмотра расположения аптеки нажмите кнопку *«Карта»* рядом с её описанием.\n\n";
 
         return context.ReplyAsync(text,
-            BotKeyboard.SingleColumn(BotButton.Callback("Главное меню", "start:menu")));
+            BotKeyboard.SingleColumn(BotButton.Callback("Главное меню", "start:menu")), ct: ct);
     }
 }
